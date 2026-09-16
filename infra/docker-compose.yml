@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fsociety-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fsociety
+      POSTGRES_PASSWORD: fsociety
+      POSTGRES_DB: fsociety
+    ports:
+      - "5432:5432"
+    volumes:
+      - fsociety_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fsociety_pgdata:

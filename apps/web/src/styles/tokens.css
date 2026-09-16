@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #0b0b0e;
+  --color-panel: #17181c;
+  --color-paper: #edede8;
+  --color-steel: #7b808c;
+  --color-signal: #ff2e43;
+  --color-signal-dim: #7a1420;
+
+  --font-display: "Clash Display", "General Sans", sans-serif;
+  --font-body: "General Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
