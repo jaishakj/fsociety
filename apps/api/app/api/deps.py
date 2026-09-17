@@ -2,31 +2,34 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.modules.auth.models import User, UserRole
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+oauth2_scheme = HTTPBearer(auto_error=False)
 
 DbSession = Annotated[Session, Depends(get_db)]
 
 
 def get_current_user(
     db: DbSession,
-    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(oauth2_scheme),
+    ] = None,
 ) -> User:
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    if not token:
+    if not credentials:
         raise credentials_error
-
-    subject = decode_access_token(token)
+    
+    subject = decode_access_token(credentials.credentials)
     if not subject:
         raise credentials_error
 
