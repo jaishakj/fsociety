@@ -37,7 +37,11 @@ class UserRoleAssignment(Base):
         primary_key=True,
     )
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role"),
+        Enum(
+            UserRole,
+            name="user_role",
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         primary_key=True,
     )
 
