@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from vercel.blob import AsyncBlobClient
 
 from app.api.deps import AdminUser, DbSession
 from app.core.config import settings
@@ -82,11 +83,27 @@ async def upload_product_image(
     if len(content) > max_bytes:
         raise HTTPException(status_code=400, detail="Image too large")
 
-    upload_dir = Path(settings.upload_dir) / "products"
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
     filename = f"{uuid.uuid4()}{extension}"
-    (upload_dir / filename).write_bytes(content)
-
-    url = f"/uploads/products/{filename}"
-    return service.add_image(db, product, url=url, alt=product.name)
+    content_type = file.content_type or "application/octet-stream"
+    
+    try:
+        async with AsyncBlobClient() as client:
+            blob = await client.put(
+                f"products/{filename}",
+                content,
+                access="public",
+                content_type=content_type,
+                add_random_suffix=False,
+            )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Image storage upload failed",
+        ) from exc
+    
+    return service.add_image(
+        db,
+        product,
+        url=blob.url,
+        alt=product.name,
+    )
