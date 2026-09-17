@@ -40,7 +40,11 @@ class Product(UUIDMixin, TimestampMixin, Base):
     stock: Mapped[int] = mapped_column(Integer, default=0)
 
     status: Mapped[ProductStatus] = mapped_column(
-        Enum(ProductStatus, name="product_status"),
+        Enum(
+            ProductStatus,
+            name="product_status",
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         default=ProductStatus.DRAFT,
     )
 
