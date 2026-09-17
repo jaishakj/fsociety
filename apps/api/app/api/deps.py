@@ -28,8 +28,7 @@ def get_current_user(
     )
     if not credentials:
         raise credentials_error
-    
-    subject = decode_access_token(credentials.credentials)
+        subject = decode_access_token(credentials.credentials)
     if not subject:
         raise credentials_error
 
