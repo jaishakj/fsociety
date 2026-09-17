@@ -5,6 +5,7 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from vercel.oidc.aio import get_vercel_oidc_token
 
 from app.api.deps import AdminUser, DbSession
 from app.core.config import settings
@@ -34,28 +35,13 @@ async def upload_to_vercel_blob(
     *,
     content_type: str,
 ) -> str:
-    """
-    Upload a file to Vercel Blob using the project's OIDC credentials.
 
-    Vercel provides:
-      - VERCEL_OIDC_TOKEN
-      - BLOB_STORE_ID
-
-    automatically to the deployed Function when the Blob store is
-    connected through OIDC.
-    """
-
-    oidc_token = os.getenv("VERCEL_OIDC_TOKEN")
+    oidc_token = await get_vercel_oidc_token()
     store_id = os.getenv("BLOB_STORE_ID")
-
-    if not oidc_token:
-        raise RuntimeError("VERCEL_OIDC_TOKEN is not available")
-
+    
     if not store_id:
         raise RuntimeError("BLOB_STORE_ID is not available")
-
-    # BLOB_STORE_ID can be returned as "store_xxx".
-    # Blob API expects the bare store ID.
+        
     if store_id.startswith("store_"):
         store_id = store_id[len("store_"):]
 
