@@ -2,14 +2,26 @@ import re
 
 from sqlalchemy.orm import Session
 
-from app.modules.products.models import Product, ProductImage, ProductStatus
-from app.modules.products.schemas import ProductCreate, ProductUpdate
+from app.modules.products.models import Category, Product, ProductImage, ProductStatus
+from app.modules.products.schemas import CategoryCreate, ProductCreate, ProductUpdate
 
 
 def slugify(value: str) -> str:
     value = value.lower().strip()
     value = re.sub(r"[^a-z0-9]+", "-", value)
     return value.strip("-")
+
+
+def create_category(db: Session, data: CategoryCreate) -> Category:
+    category = Category(
+        name=data.name,
+        slug=data.slug or slugify(data.name),
+    )
+
+    db.add(category)
+    db.commit()
+    db.refresh(category)
+    return category
 
 
 def create_product(db: Session, data: ProductCreate) -> Product:

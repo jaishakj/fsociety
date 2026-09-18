@@ -12,6 +12,8 @@ from app.core.config import settings
 from app.modules.products import repository, service
 from app.modules.products.importers import import_products
 from app.modules.products.schemas import (
+    CategoryCreate,
+    CategoryOut,
     ImportResult,
     ProductCreate,
     ProductImageOut,
@@ -20,6 +22,23 @@ from app.modules.products.schemas import (
 )
 
 router = APIRouter()
+
+
+@router.post("/categories", response_model=CategoryOut, status_code=201)
+def create_category(
+    data: CategoryCreate,
+    db: DbSession,
+    _admin: AdminUser,
+):
+    slug = data.slug or service.slugify(data.name)
+
+    if repository.get_category_by_slug(db, slug):
+        raise HTTPException(
+            status_code=400,
+            detail="Slug already in use",
+        )
+
+    return service.create_category(db, data)
 
 ALLOWED_IMPORT_EXTENSIONS = {".csv", ".json"}
 ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
