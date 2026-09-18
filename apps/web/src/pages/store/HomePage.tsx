@@ -14,7 +14,7 @@ export default function HomePage() {
         eyebrow="New Collection"
         title="HIT HARD"
         subtitle="Dresses built for the person who refuses to blend in."
-        imageUrl="https://images.example.com/hero-model.jpg"
+        imageUrl="/hero-model.png"
         specs={[
           { label: "Drop", value: "SS26" },
           { label: "Pieces", value: "48" },
