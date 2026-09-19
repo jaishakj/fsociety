@@ -59,7 +59,7 @@ export function DepthStackHero({
   return (
     <section
       ref={containerRef}
-      className="relative mt-6 overflow-hidden rounded-[32px] border border-white/10 bg-[var(--color-panel)] px-6 py-16 md:px-16 md:py-24"
+      className="relative mt-6 rounded-[32px] border border-white/10 bg-[var(--color-panel)] px-6 py-16 md:px-16 md:py-24"
       style={{ perspective: "1000px" }}
     >
       <div
@@ -79,19 +79,23 @@ export function DepthStackHero({
           <h1 className="font-display text-5xl text-[var(--color-paper)] md:text-6xl">{title}</h1>
           <p className="mt-4 text-[var(--color-steel)]">{subtitle}</p>
         </div>
+      </div>
 
-        <div ref={imageRef} className="relative w-full max-w-sm" style={{ transformStyle: "preserve-3d" }}>
+      {imageUrl ? (
+        <div
+          ref={imageRef}
+          className="relative z-10 mx-auto mt-8 w-full max-w-sm md:absolute md:right-10 md:bottom-0 md:mx-0 md:mt-0 md:w-auto lg:right-16"
+          style={{ transformStyle: "preserve-3d" }}
+        >
           <div
             className="absolute inset-x-8 bottom-0 h-16 rounded-full blur-2xl"
             style={{ background: "var(--color-signal-dim)", opacity: 0.6 }}
           />
-          {imageUrl ? (
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl">
-              <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
-            </div>
-          ) : null}
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-[460px] md:w-auto">
+            <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {specs.length > 0 ? (
         <div className="relative z-10 mt-10 flex flex-wrap gap-3">
