@@ -86,7 +86,9 @@ export function DepthStackHero({
             style={{ background: "var(--color-signal-dim)", opacity: 0.6 }}
           />
           {imageUrl ? (
-            <img src={imageUrl} alt={title} className="relative w-full rounded-2xl object-cover" />
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl">
+              <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
+            </div>
           ) : null}
         </div>
       </div>
