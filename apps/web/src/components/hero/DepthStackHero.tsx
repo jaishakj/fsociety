@@ -84,14 +84,14 @@ export function DepthStackHero({
       {imageUrl ? (
         <div
           ref={imageRef}
-          className="relative z-10 mx-auto mt-8 w-full max-w-sm md:absolute md:right-10 md:bottom-0 md:mx-0 md:mt-0 md:w-auto lg:right-16"
+          className="relative z-10 mx-auto mt-8 w-full max-w-sm md:absolute md:right-10 md:-top-4 md:bottom-0 md:mx-0 md:mt-0 md:w-auto lg:right-16"
           style={{ transformStyle: "preserve-3d" }}
         >
           <div
             className="absolute inset-x-8 bottom-0 h-16 rounded-full blur-2xl"
             style={{ background: "var(--color-signal-dim)", opacity: 0.6 }}
           />
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-[460px] md:w-auto">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-full md:w-auto">
             <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
           </div>
         </div>
