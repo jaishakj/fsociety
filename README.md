@@ -38,7 +38,8 @@ pip install -r requirements.txt
 cp .env.example .env        # edit JWT_SECRET_KEY before deploying anywhere real
 
 alembic upgrade head
-python scripts/seed.py      # optional: adds sample categories + 2 sample products
+PYTHONPATH=. python scripts/seed.py           # optional: sample categories + 2 sample products
+PYTHONPATH=. python scripts/seed_reality.py   # optional: sample topics + concepts for /reality
 uvicorn app.main:app --reload
 ```
 

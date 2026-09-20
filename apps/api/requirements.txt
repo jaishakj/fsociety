@@ -10,6 +10,7 @@ pyjwt
 pwdlib[argon2]
 email-validator
 httpx
+pyyaml
 pytest
 ruff
 vercel==0.11.2

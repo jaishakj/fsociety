@@ -24,6 +24,9 @@ export function NavBar() {
         <Link to="/shop" data-cursor className="transition-colors hover:text-[var(--color-paper)]">
           Shop
         </Link>
+        <Link to="/reality" data-cursor className="transition-colors hover:text-[var(--color-paper)]">
+          Reality
+        </Link>
       </nav>
 
       <div className="flex items-center gap-2 text-[var(--color-paper)]">
