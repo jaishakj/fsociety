@@ -71,15 +71,26 @@ def list_concepts(
 
 
 def get_related_concepts(db: Session, concept_id: UUID) -> list[tuple[str, Concept]]:
-    stmt = (
+    outgoing_stmt = (
         select(ConceptRelation)
-        .options(
-            selectinload(ConceptRelation.to_concept).selectinload(Concept.domain),
-        )
+        .options(selectinload(ConceptRelation.to_concept).selectinload(Concept.domain))
         .where(ConceptRelation.from_concept_id == concept_id)
     )
-    relations = db.scalars(stmt)
-    return [(relation.relation_type.value, relation.to_concept) for relation in relations]
+    incoming_stmt = (
+        select(ConceptRelation)
+        .options(selectinload(ConceptRelation.from_concept).selectinload(Concept.domain))
+        .where(ConceptRelation.to_concept_id == concept_id)
+    )
+
+    results = [
+        (relation.relation_type.value, relation.to_concept)
+        for relation in db.scalars(outgoing_stmt)
+    ]
+    results += [
+        (relation.relation_type.value, relation.from_concept)
+        for relation in db.scalars(incoming_stmt)
+    ]
+    return results
 
 
 def get_tag_by_name(db: Session, name: str) -> Tag | None:

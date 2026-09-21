@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { DepthStackHero } from "@/components/hero/DepthStackHero";
 import { ConceptCard } from "../components/ConceptCard";
 import { useConcepts, useDomains } from "../hooks/useReality";
 
@@ -9,18 +10,27 @@ export default function RealityHomePage() {
 
   return (
     <div className="pb-24">
-      <section className="mt-6 rounded-[32px] border border-white/10 bg-[var(--color-panel)] px-6 py-16 md:px-16 md:py-24">
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-signal)]">
-          Human Reality
-        </span>
-        <h1 className="font-display mt-4 max-w-2xl text-5xl text-[var(--color-paper)] md:text-6xl">
-          A source-backed map of how people and the world actually work.
-        </h1>
-        <p className="mt-4 max-w-xl text-[var(--color-steel)]">
-          Concepts, not opinions. Every claim here traces back to a source, every evidence level
-          is stated plainly, and nothing is dressed up as more certain than it is.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+      <DepthStackHero
+        eyebrow="Human Reality"
+        title="KNOW REAL"
+        subtitle="A source-backed map of how people and the world actually work. Concepts, not opinions, every claim traces back to a source, every evidence level stated plainly."
+        imageUrl="/reality-hero.jpg"
+        specs={[
+          { label: "Topics", value: String(domains?.length ?? 9) },
+          { label: "Concepts", value: `${concepts?.total ?? 140}+` },
+        ]}
+      />
+
+      <section className="mt-10 flex flex-col items-start justify-between gap-4 rounded-3xl border border-white/10 bg-[var(--color-panel)] p-8 md:flex-row md:items-center">
+        <div>
+          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-signal)]">
+            Start here
+          </span>
+          <h2 className="font-display mt-2 text-3xl text-[var(--color-paper)]">
+            Browse by topic or search everything
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
           <Link
             to="/reality/topics"
             data-cursor
