@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { useCartStore } from "@/stores/cartStore";
@@ -99,10 +100,11 @@ export function CartDrawer() {
                   <span>Subtotal</span>
                   <span className="font-mono">INR {totalPrice.toFixed(2)}</span>
                 </div>
-                {/* No checkout backend yet, this is intentionally a placeholder */}
-                <Button variant="outline" className="mt-4 w-full" disabled>
-                  Checkout (coming soon)
-                </Button>
+                <Link to="/checkout" data-cursor onClick={close} className="mt-4 block">
+                  <Button variant="primary" className="w-full">
+                    Checkout
+                  </Button>
+                </Link>
               </div>
             ) : null}
           </motion.aside>
