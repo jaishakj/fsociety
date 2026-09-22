@@ -50,10 +50,19 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="py-10 pb-24">
-      <h1 className="font-display text-4xl text-[var(--color-paper)]">Checkout</h1>
+    <div className="relative py-10 pb-24">
+      <div
+        className="pointer-events-none absolute -top-20 left-1/4 h-[420px] w-[420px] rounded-full blur-3xl"
+        style={{ background: "var(--color-signal-dim)", opacity: 0.35 }}
+      />
+      <div
+        className="pointer-events-none absolute right-1/4 top-1/2 h-[320px] w-[320px] rounded-full blur-3xl"
+        style={{ background: "var(--color-signal-dim)", opacity: 0.25 }}
+      />
 
-      <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-[1.2fr_1fr]">
+      <h1 className="relative z-10 font-display text-4xl text-[var(--color-paper)]">Checkout</h1>
+
+      <div className="relative z-10 mt-10 grid grid-cols-1 gap-10 md:grid-cols-[1.2fr_1fr]">
         <section className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6">
           <h2 className="font-display text-lg text-[var(--color-paper)]">Order summary</h2>
           <ul className="mt-6 space-y-4">
