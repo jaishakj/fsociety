@@ -33,6 +33,7 @@ export interface ProductListResponse {
 
 export interface ProductFilters {
   page?: number;
+  page_size?: number;
   category?: string;
   q?: string;
   min_price?: number;

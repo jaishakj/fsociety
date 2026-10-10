@@ -33,3 +33,17 @@ export function useCategories() {
     },
   });
 }
+
+export function useRelatedProducts(categorySlug: string | undefined, excludeId: string | undefined) {
+  return useQuery({
+    queryKey: ["products", "related", categorySlug],
+    queryFn: async () => {
+      const { data } = await api.get<ProductListResponse>("/products", {
+        params: { category: categorySlug, page_size: 5 },
+      });
+      return data;
+    },
+    enabled: Boolean(categorySlug),
+    select: (data) => data.items.filter((item) => item.id !== excludeId).slice(0, 4),
+  });
+}
