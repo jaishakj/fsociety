@@ -28,13 +28,13 @@ export function CustomCursor() {
 
     function onOver(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("[data-cursor]")) {
-        ringVisual.classList.add("cursor-ring--active");
+        ringVisualRef.current?.classList.add("cursor-ring--active");
       }
     }
 
     function onOut(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("[data-cursor]")) {
-        ringVisual.classList.remove("cursor-ring--active");
+        ringVisualRef.current?.classList.remove("cursor-ring--active");
       }
     }
 
