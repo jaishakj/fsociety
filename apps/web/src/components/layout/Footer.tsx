@@ -19,7 +19,7 @@ export function Footer() {
         </div>
 
         <div>
-          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-paper)]">Shop</span>
+          <span className="text-xs font-medium text-[var(--color-paper)]">Shop</span>
           <ul className="mt-4 space-y-2 text-xs">
             <li>
               <Link to="/shop" data-cursor className="hover:text-[var(--color-paper)]">
@@ -35,7 +35,7 @@ export function Footer() {
         </div>
 
         <div>
-          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-paper)]">Explore</span>
+          <span className="text-xs font-medium text-[var(--color-paper)]">Explore</span>
           <ul className="mt-4 space-y-2 text-xs">
             <li>
               <Link to="/" data-cursor className="hover:text-[var(--color-paper)]">
@@ -51,12 +51,12 @@ export function Footer() {
         </div>
 
         <div>
-          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-paper)]">Info</span>
+          <span className="text-xs font-medium text-[var(--color-paper)]">Info</span>
           <p className="mt-4 text-xs">13.08&deg;N 80.27&deg;E &mdash; Chennai, IN</p>
         </div>
       </div>
 
-      <div className="font-mono mt-10 border-t border-white/10 pt-6 text-[11px] uppercase tracking-wide">
+      <div className="mt-10 border-t border-white/10 pt-6 text-xs">
         &copy; {new Date().getFullYear()} Fsociety. All rights reserved.
       </div>
     </footer>

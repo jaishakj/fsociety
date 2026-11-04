@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type NativeButtonProps = Omit<
@@ -12,6 +13,7 @@ interface ButtonProps extends NativeButtonProps {
 }
 
 export function Button({ children, variant = "primary", className = "", ...rest }: ButtonProps) {
+  const reduceMotion = useReducedMotion();
   const base =
     "inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-colors";
   const styles =
@@ -22,8 +24,8 @@ export function Button({ children, variant = "primary", className = "", ...rest 
   return (
     <motion.button
       data-cursor
-      whileTap={{ scale: 0.96 }}
-      whileHover={{ scale: 1.03 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+      whileHover={reduceMotion ? undefined : { scale: 1.01 }}
       transition={{ type: "spring", bounce: 0, duration: 0.3 }}
       className={`${base} ${styles} ${className}`}
       {...rest}

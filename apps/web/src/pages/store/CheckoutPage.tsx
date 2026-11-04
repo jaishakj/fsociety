@@ -75,7 +75,7 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex-1">
                   <p className="text-sm text-[var(--color-paper)]">{item.name}</p>
-                  <p className="font-mono text-xs text-[var(--color-steel)]">Qty {item.quantity}</p>
+                  <p className="text-xs text-[var(--color-steel)]">Qty {item.quantity}</p>
                 </div>
                 <span className="font-mono text-sm text-[var(--color-paper)]">
                   {item.currency} {(Number(item.price) * item.quantity).toFixed(2)}
@@ -110,7 +110,7 @@ export default function CheckoutPage() {
                 <div className="mx-auto mt-6 h-[240px] w-[240px] animate-pulse rounded-2xl bg-black/30" />
               )}
 
-              <p className="font-mono mt-4 text-xs uppercase tracking-wide text-[var(--color-steel)]">
+              <p className="mt-4 text-sm text-[var(--color-steel)]">
                 Scan with any UPI app
               </p>
 

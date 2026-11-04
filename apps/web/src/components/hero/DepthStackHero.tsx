@@ -26,6 +26,8 @@ export function DepthStackHero({
     const text = textRef.current;
     if (!container || !image || !text) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     gsap.fromTo(text, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" });
     gsap.fromTo(
       image,
@@ -71,12 +73,8 @@ export function DepthStackHero({
 
       <div className="relative z-10 flex flex-col items-center gap-8 md:flex-row md:items-end md:justify-between">
         <div className="max-w-md">
-          {eyebrow ? (
-            <span className="font-mono mb-4 inline-block text-xs uppercase tracking-[0.2em] text-[var(--color-signal)]">
-              {eyebrow}
-            </span>
-          ) : null}
           <h1 className="font-display text-5xl text-[var(--color-paper)] md:text-6xl">{title}</h1>
+          {eyebrow ? <p className="mt-3 text-sm text-[var(--color-steel)]">{eyebrow}</p> : null}
           <p className="mt-4 text-[var(--color-steel)]">{subtitle}</p>
         </div>
       </div>
@@ -87,10 +85,6 @@ export function DepthStackHero({
           className="relative z-10 mx-auto mt-8 w-full max-w-sm md:absolute md:right-10 md:-top-4 md:bottom-0 md:mx-0 md:mt-0 md:w-auto lg:right-16"
           style={{ transformStyle: "preserve-3d" }}
         >
-          <div
-            className="absolute inset-x-8 bottom-0 h-16 rounded-full blur-2xl"
-            style={{ background: "var(--color-signal-dim)", opacity: 0.6 }}
-          />
           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-full md:w-auto">
             <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
           </div>
@@ -102,7 +96,7 @@ export function DepthStackHero({
           {specs.map((spec) => (
             <span
               key={spec.label}
-              className="font-mono rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[11px] uppercase tracking-wide text-[var(--color-steel)]"
+              className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-[var(--color-steel)]"
             >
               {spec.label}: <span className="text-[var(--color-paper)]">{spec.value}</span>
             </span>

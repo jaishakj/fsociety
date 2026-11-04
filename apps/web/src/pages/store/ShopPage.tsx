@@ -22,7 +22,7 @@ export default function ShopPage() {
       <AmbientGlow />
 
       <h1 className="relative z-10 font-display text-4xl text-[var(--color-paper)]">Shop</h1>
-      <p className="font-mono relative z-10 mt-2 text-xs uppercase tracking-wide text-[var(--color-steel)]">
+      <p className="relative z-10 mt-2 text-sm text-[var(--color-steel)]">
         {products ? `${products.total} results found` : isError ? "" : "Loading"}
       </p>
 
@@ -52,18 +52,18 @@ export default function ShopPage() {
                   data-cursor
                   disabled={page <= 1}
                   onClick={() => setFilters((prev) => ({ ...prev, page: page - 1 }))}
-                  className="font-mono rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-wide text-[var(--color-steel)] disabled:opacity-30"
+                  className="rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--color-steel)] disabled:opacity-30"
                 >
                   Prev
                 </button>
-                <span className="font-mono text-xs text-[var(--color-steel)]">
+                <span className="text-sm text-[var(--color-steel)]">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   data-cursor
                   disabled={page >= totalPages}
                   onClick={() => setFilters((prev) => ({ ...prev, page: page + 1 }))}
-                  className="font-mono rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-wide text-[var(--color-steel)] disabled:opacity-30"
+                  className="rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--color-steel)] disabled:opacity-30"
                 >
                   Next
                 </button>

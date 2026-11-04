@@ -70,7 +70,7 @@ export default function ProductPage() {
 
       <nav
         aria-label="Breadcrumb"
-        className="font-mono relative z-10 mt-6 flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-[var(--color-steel)]"
+        className="relative z-10 mt-6 flex flex-wrap items-center gap-2 text-sm text-[var(--color-steel)]"
       >
         <Link to="/" data-cursor className="hover:text-[var(--color-paper)]">
           Home
@@ -86,7 +86,6 @@ export default function ProductPage() {
       </nav>
 
       <DepthStackHero
-        eyebrow={product.category.name}
         title={product.name}
         subtitle={product.description ?? ""}
         imageUrl={activeImage?.url ?? ""}

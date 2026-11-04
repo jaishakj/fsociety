@@ -4,13 +4,15 @@ import { useEffect, useRef } from "react";
 export function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const ringVisualRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (window.matchMedia("(hover: none), (pointer: coarse)").matches) return;
 
     const dot = dotRef.current;
     const ring = ringRef.current;
-    if (!dot || !ring) return;
+    const ringVisual = ringVisualRef.current;
+    if (!dot || !ring || !ringVisual) return;
 
     const moveDotX = gsap.quickTo(dot, "x", { duration: 0.1, ease: "power3" });
     const moveDotY = gsap.quickTo(dot, "y", { duration: 0.1, ease: "power3" });
@@ -26,13 +28,13 @@ export function CustomCursor() {
 
     function onOver(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("[data-cursor]")) {
-        ring?.classList.add("cursor-ring--active");
+        ringVisual.classList.add("cursor-ring--active");
       }
     }
 
     function onOut(e: MouseEvent) {
       if ((e.target as HTMLElement).closest("[data-cursor]")) {
-        ring?.classList.remove("cursor-ring--active");
+        ringVisual.classList.remove("cursor-ring--active");
       }
     }
 
@@ -49,8 +51,12 @@ export function CustomCursor() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[999] hidden md:block">
-      <div ref={ringRef} className="cursor-ring" />
-      <div ref={dotRef} className="cursor-dot" />
+      <div ref={ringRef} className="cursor-ring-position">
+        <div ref={ringVisualRef} className="cursor-ring" />
+      </div>
+      <div ref={dotRef} className="cursor-dot-position">
+        <div className="cursor-dot" />
+      </div>
     </div>
   );
 }

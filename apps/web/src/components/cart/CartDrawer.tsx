@@ -84,7 +84,7 @@ export function CartDrawer() {
                         data-cursor
                         onClick={() => removeItem(item.id)}
                         aria-label="Remove item"
-                        className="text-[var(--color-steel)] hover:text-[var(--color-signal)]"
+                        className="text-[var(--color-steel)] transition-colors hover:text-[var(--color-signal)] active:translate-y-px"
                       >
                         <X size={14} />
                       </button>
@@ -98,7 +98,7 @@ export function CartDrawer() {
               <div className="mt-6 border-t border-white/10 pt-4">
                 <div className="flex items-center justify-between text-sm text-[var(--color-paper)]">
                   <span>Subtotal</span>
-                  <span className="font-mono">INR {totalPrice.toFixed(2)}</span>
+                  <span>INR {totalPrice.toFixed(2)}</span>
                 </div>
                 <Link to="/checkout" data-cursor onClick={close} className="mt-4 block">
                   <Button variant="primary" className="w-full">
