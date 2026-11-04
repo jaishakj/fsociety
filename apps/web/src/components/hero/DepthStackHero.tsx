@@ -66,12 +66,12 @@ export function DepthStackHero({
     >
       <div
         ref={textRef}
-        className="font-display pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none text-center text-[18vw] leading-none text-white/5 md:text-[9vw]"
+        className="font-display pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 select-none text-center text-[9vw] leading-none text-white/5 lg:block"
       >
         {title}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-8 md:flex-row md:items-end md:justify-between">
+      <div className="relative z-10 flex flex-col items-center gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-md">
           <h1 className="font-display text-5xl text-[var(--color-paper)] md:text-6xl">{title}</h1>
           {eyebrow ? <p className="mt-3 text-sm text-[var(--color-steel)]">{eyebrow}</p> : null}
@@ -82,7 +82,7 @@ export function DepthStackHero({
       {imageUrl ? (
         <div
           ref={imageRef}
-          className="relative z-10 mx-auto mt-8 w-full max-w-sm md:absolute md:right-10 md:-top-4 md:bottom-0 md:mx-0 md:mt-0 md:w-auto lg:right-16"
+          className="relative z-10 mx-auto mt-8 w-full max-w-sm lg:absolute lg:right-10 lg:-top-4 lg:bottom-0 lg:mx-0 lg:mt-0 lg:w-auto xl:right-16"
           style={{ transformStyle: "preserve-3d" }}
         >
           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-full md:w-auto">

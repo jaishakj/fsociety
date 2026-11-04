@@ -9,6 +9,7 @@ node_modules/
 dist/
 .pnpm-store/
 .hallmark/
+.taste-skill/
 
 # Env
 .env
