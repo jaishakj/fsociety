@@ -12,8 +12,7 @@ export default function TopicDetailPage() {
 
   return (
     <div className="py-10 pb-24">
-      <span className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-signal)]">Topic</span>
-      <h1 className="font-display mt-2 text-4xl text-[var(--color-paper)]">
+      <h1 className="font-display text-4xl text-[var(--color-paper)]">
         {domain?.name ?? "Loading\u2026"}
       </h1>
       {domain?.description ? <p className="mt-2 text-[var(--color-steel)]">{domain.description}</p> : null}

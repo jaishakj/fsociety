@@ -50,7 +50,7 @@ export function ProductCard({ product }: { product: Product }) {
           <img
             src={image}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover"
           />
         ) : null}
         <button
@@ -58,7 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
           data-cursor
           onClick={onWishlistClick}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className="absolute right-2 top-2 rounded-full bg-black/50 p-2 backdrop-blur transition-colors hover:bg-black/70"
+          className="absolute right-2 top-2 rounded-full border border-white/15 bg-[var(--color-panel)] p-2 transition-colors hover:bg-[var(--color-void)]"
         >
           <Heart
             size={16}

@@ -28,7 +28,7 @@ export default function ConceptDetailPage() {
         <Link
           to={`/reality/topics/${concept.domain.slug}`}
           data-cursor
-          className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-signal)]"
+          className="text-sm text-[var(--color-signal)] hover:underline"
         >
           {concept.domain.name}
         </Link>
@@ -37,7 +37,7 @@ export default function ConceptDetailPage() {
         </h1>
         <p className="mt-4 max-w-xl text-[var(--color-steel)]">{concept.summary}</p>
 
-        <div className="font-mono mt-8 flex flex-wrap gap-3 text-[11px] uppercase tracking-wide">
+        <div className="mt-8 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[var(--color-signal)]">
             Evidence: {EVIDENCE_LABEL[concept.evidence_level] ?? concept.evidence_level}
           </span>
@@ -77,7 +77,7 @@ export default function ConceptDetailPage() {
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {related.map(({ relation_type, concept: relatedConcept }) => (
               <div key={relatedConcept.id}>
-                <span className="font-mono text-[10px] uppercase tracking-wide text-[var(--color-steel)]">
+                <span className="text-xs text-[var(--color-steel)]">
                   {relation_type.replace(/_/g, " ")}
                 </span>
                 <div className="mt-1">

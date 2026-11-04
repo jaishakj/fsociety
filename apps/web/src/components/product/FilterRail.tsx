@@ -8,7 +8,7 @@ interface FilterRailProps {
 
 export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
   return (
-    <aside className="font-mono rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-xs uppercase tracking-wide text-[var(--color-steel)]">
+    <aside className="rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
       <div className="flex flex-wrap items-center gap-2">
         <button
           data-cursor

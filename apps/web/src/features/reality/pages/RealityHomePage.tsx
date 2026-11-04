@@ -23,10 +23,7 @@ export default function RealityHomePage() {
 
       <section className="mt-10 flex flex-col items-start justify-between gap-4 rounded-3xl border border-white/10 bg-[var(--color-panel)] p-8 md:flex-row md:items-center">
         <div>
-          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-signal)]">
-            Start here
-          </span>
-          <h2 className="font-display mt-2 text-3xl text-[var(--color-paper)]">
+          <h2 className="font-display text-3xl text-[var(--color-paper)]">
             Browse by topic or search everything
           </h2>
         </div>
@@ -57,7 +54,7 @@ export default function RealityHomePage() {
                 key={domain.id}
                 to={`/reality/topics/${domain.slug}`}
                 data-cursor
-                className="font-mono rounded-full border border-white/10 bg-[var(--color-panel)] px-4 py-2 text-xs uppercase tracking-wide text-[var(--color-steel)] hover:text-[var(--color-paper)]"
+                className="rounded-full border border-white/10 bg-[var(--color-panel)] px-4 py-2 text-sm text-[var(--color-steel)] hover:text-[var(--color-paper)]"
               >
                 {domain.name}
               </Link>
@@ -69,7 +66,7 @@ export default function RealityHomePage() {
       <section className="mt-16">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-2xl text-[var(--color-paper)]">Recent concepts</h2>
-          <Link to="/reality/concepts" data-cursor className="font-mono text-xs uppercase text-[var(--color-steel)]">
+          <Link to="/reality/concepts" data-cursor className="text-sm text-[var(--color-steel)]">
             View all
           </Link>
         </div>

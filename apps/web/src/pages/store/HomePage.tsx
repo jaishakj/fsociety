@@ -27,10 +27,7 @@ export default function HomePage() {
 
       <section className="relative z-10 mt-10 flex flex-col items-start justify-between gap-4 rounded-3xl border border-white/10 bg-[var(--color-panel)] p-8 md:flex-row md:items-center">
         <div>
-          <span className="font-mono text-xs uppercase tracking-wide text-[var(--color-signal)]">
-            Limited
-          </span>
-          <h2 className="font-display mt-2 text-3xl text-[var(--color-paper)]">
+          <h2 className="font-display text-3xl text-[var(--color-paper)]">
             40% off select styles
           </h2>
         </div>
@@ -42,7 +39,7 @@ export default function HomePage() {
       <section className="relative z-10 mt-16">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-2xl text-[var(--color-paper)]">New arrivals</h2>
-          <Link to="/shop" data-cursor className="font-mono text-xs uppercase text-[var(--color-steel)]">
+          <Link to="/shop" data-cursor className="text-sm text-[var(--color-steel)]">
             View all
           </Link>
         </div>

@@ -3,7 +3,7 @@ import type { ConceptSource } from "../types/reality";
 export function SourceList({ sources }: { sources: ConceptSource[] }) {
   if (sources.length === 0) {
     return (
-      <p className="font-mono mt-4 text-xs text-[var(--color-steel)]">
+      <p className="mt-4 text-sm text-[var(--color-steel)]">
         No sources attached to this concept yet.
       </p>
     );
@@ -17,10 +17,10 @@ export function SourceList({ sources }: { sources: ConceptSource[] }) {
           className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-[var(--color-steel)]"
         >
           <p className="text-[var(--color-paper)]">{source.title}</p>
-          <p className="font-mono mt-1 text-[11px] uppercase tracking-wide">
+          <p className="mt-1 text-xs">
             {source.authors.join(", ") || "Unknown author"}
-            {source.publication_year ? ` \u00b7 ${source.publication_year}` : ""}
-            {section_type ? ` \u00b7 supports: ${section_type}` : ""}
+            {source.publication_year ? `, ${source.publication_year}` : ""}
+            {section_type ? `, supports: ${section_type}` : ""}
           </p>
           {source.url ? (
             <a

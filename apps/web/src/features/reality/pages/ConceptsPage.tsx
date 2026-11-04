@@ -14,11 +14,11 @@ export default function ConceptsPage() {
   return (
     <div className="py-10 pb-24">
       <h1 className="font-display text-4xl text-[var(--color-paper)]">Concepts</h1>
-      <p className="font-mono mt-2 text-xs uppercase tracking-wide text-[var(--color-steel)]">
+      <p className="mt-2 text-sm text-[var(--color-steel)]">
         {concepts ? `${concepts.total} concepts found` : "Loading"}
       </p>
 
-      <div className="font-mono mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-xs uppercase tracking-wide text-[var(--color-steel)]">
+      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
         <input
           type="text"
           placeholder="Search concepts..."
