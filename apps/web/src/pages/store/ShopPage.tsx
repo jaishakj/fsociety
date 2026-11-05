@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { FilterRail } from "@/components/product/FilterRail";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -9,7 +10,12 @@ import { useCategories, useProducts } from "@/hooks/useProducts";
 import type { ProductFilters } from "@/types/product";
 
 export default function ShopPage() {
-  const [filters, setFilters] = useState<ProductFilters>({ page: 1, sort: "newest" });
+  const [searchParams] = useSearchParams();
+  const [filters, setFilters] = useState<ProductFilters>(() => ({
+    page: 1,
+    sort: "newest",
+    category: searchParams.get("category") ?? undefined,
+  }));
   const { data: categories } = useCategories();
   const { data: products, isLoading, isError, refetch } = useProducts(filters);
 

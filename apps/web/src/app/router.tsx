@@ -12,6 +12,9 @@ import WishlistPage from "@/pages/store/WishlistPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProductPage from "@/pages/store/ProductPage";
 import ShopPage from "@/pages/store/ShopPage";
+import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
+import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
+import { legalRoutes } from "@/app/legalRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +25,8 @@ export const router = createBrowserRouter([
       { path: "/product/:slug", element: <ProductPage /> },
       { path: "/checkout", element: <CheckoutPage /> },
       { path: "/wishlist", element: <WishlistPage /> },
+      { path: legalRoutes.privacy, element: <PrivacyPolicyPage /> },
+      { path: legalRoutes.terms, element: <TermsOfServicePage /> },
       { path: "/reality", element: <RealityHomePage /> },
       { path: "/reality/topics", element: <TopicsPage /> },
       { path: "/reality/topics/:slug", element: <TopicDetailPage /> },
