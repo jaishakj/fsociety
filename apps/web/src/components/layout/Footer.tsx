@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export function Footer() {
   return (
     <footer className="mx-auto mt-24 max-w-6xl border-t border-white/10 px-6 py-12 text-sm text-[var(--color-steel)]">
-      <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
         <div className="col-span-2 md:col-span-1">
           <span className="font-display text-lg text-[var(--color-paper)]">FSOCIETY</span>
           <p className="mt-3 text-xs">Dresses built for the person who refuses to blend in.</p>
@@ -53,6 +53,18 @@ export function Footer() {
         <div>
           <span className="text-xs font-medium text-[var(--color-paper)]">Info</span>
           <p className="mt-4 text-xs">13.08&deg;N 80.27&deg;E &mdash; Chennai, IN</p>
+        </div>
+
+        <div>
+          <span className="text-xs font-medium text-[var(--color-paper)]">Legal</span>
+          <ul className="mt-4 space-y-2 text-xs">
+            <li>
+              <Link to="/privacy-policy" data-cursor className="hover:text-[var(--color-paper)]">Privacy Policy</Link>
+            </li>
+            <li>
+              <Link to="/terms-of-service" data-cursor className="hover:text-[var(--color-paper)]">Terms of Service</Link>
+            </li>
+          </ul>
         </div>
       </div>
 

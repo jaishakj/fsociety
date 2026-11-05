@@ -49,7 +49,8 @@ export function ProductCard({ product }: { product: Product }) {
         {image ? (
           <img
             src={image}
-            alt={product.name}
+            alt={product.images[0]?.alt || product.name}
+            loading="lazy"
             className="h-full w-full object-cover"
           />
         ) : null}
