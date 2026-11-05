@@ -1,0 +1,14 @@
+{
+  "name": "Fsociety",
+  "short_name": "Fsociety",
+  "description": "Dresses built for the person who refuses to blend in.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0B0B0E",
+  "background_color": "#0B0B0E",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
