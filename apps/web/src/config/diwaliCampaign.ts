@@ -1,7 +1,7 @@
-/** Configure the confirmed sale details here before announcing a campaign. */
+/** Diwali begins on 8 November 2026 in India (IST). */
 export const diwaliCampaign = {
   heading: "DIWALI SALE",
-  description: "A festive edit is in the works. Check back for campaign details.",
-  endAt: null as string | null,
+  description: "Explore the FSOCIETY festive edit and count down to Diwali.",
+  endAt: "2026-11-08T00:00:00+05:30",
   shopUrl: "/shop",
 };
