@@ -14,7 +14,7 @@ def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     category: str | None = None,
-    q: str | None = None,
+    q: str | None = Query(None, min_length=2, max_length=100),
     min_price: float | None = None,
     max_price: float | None = None,
     sort: str = Query("newest", pattern="^(newest|price_asc|price_desc)$"),

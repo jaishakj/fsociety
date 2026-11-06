@@ -6,6 +6,8 @@ alembic
 pydantic-settings
 python-dotenv
 python-multipart
+slowapi>=0.1.9,<1
+Pillow>=11.0,<13
 pyjwt
 pwdlib[argon2]
 email-validator

@@ -1,6 +1,7 @@
-import os
+import logging
 import uuid
 from pathlib import Path
+from typing import Annotated
 from uuid import UUID
 
 import httpx
@@ -9,6 +10,7 @@ from vercel.oidc.aio import get_vercel_oidc_token
 
 from app.api.deps import AdminUser, DbSession
 from app.core.config import settings
+from app.core.image_uploads import validate_and_normalize_image
 from app.modules.products import repository, service
 from app.modules.products.importers import import_products
 from app.modules.products.schemas import (
@@ -22,6 +24,7 @@ from app.modules.products.schemas import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/categories", response_model=CategoryOut, status_code=201)
@@ -41,7 +44,6 @@ def create_category(
     return service.create_category(db, data)
 
 ALLOWED_IMPORT_EXTENSIONS = {".csv", ".json"}
-ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 MAX_IMPORT_SIZE_BYTES = 5 * 1024 * 1024
 
 VERCEL_BLOB_API_URL = "https://vercel.com/api/blob"
@@ -54,15 +56,17 @@ async def upload_to_vercel_blob(
     *,
     content_type: str,
 ) -> str:
-
-    oidc_token = await get_vercel_oidc_token()
-    store_id = os.getenv("BLOB_STORE_ID")
+    store_id = settings.blob_store_id
     
     if not store_id:
         raise RuntimeError("BLOB_STORE_ID is not available")
+
+    try:
+        oidc_token = await get_vercel_oidc_token()
+    except Exception as exc:
+        raise RuntimeError("Vercel OIDC token is not available") from exc
         
-    if store_id.startswith("store_"):
-        store_id = store_id[len("store_"):]
+    store_id = store_id.removeprefix("store_")
 
     request_id = f"{store_id}:{uuid.uuid4().hex}"
 
@@ -164,7 +168,7 @@ def archive_product(
 async def import_products_endpoint(
     db: DbSession,
     _admin: AdminUser,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ):
     extension = Path(file.filename or "").suffix.lower()
 
@@ -204,7 +208,7 @@ async def upload_product_image(
     product_id: UUID,
     db: DbSession,
     _admin: AdminUser,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ):
     # ----------------------------------------
     # 1. Verify product
@@ -217,29 +221,22 @@ async def upload_product_image(
             detail="Product not found",
         )
 
-    # ----------------------------------------
-    # 2. Validate image extension
-    # ----------------------------------------
-    extension = Path(file.filename or "").suffix.lower()
-
-    if extension not in ALLOWED_IMAGE_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported image type",
-        )
-
-    # ----------------------------------------
-    # 3. Read and validate image size
-    # ----------------------------------------
-    content = await file.read()
-
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
+    raw_content = await file.read(max_bytes + 1)
 
-    if len(content) > max_bytes:
+    if len(raw_content) > max_bytes:
         raise HTTPException(
             status_code=400,
             detail="Image too large",
         )
+
+    try:
+        content, content_type, extension = validate_and_normalize_image(
+            file.filename or "",
+            raw_content,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # ----------------------------------------
     # 4. Generate unique Blob pathname
@@ -247,26 +244,26 @@ async def upload_product_image(
     filename = f"{uuid.uuid4()}{extension}"
     pathname = f"products/{filename}"
 
-    content_type = file.content_type or "application/octet-stream"
-
-    # ----------------------------------------
-    # 5. Upload to Vercel Blob
-    # ----------------------------------------
-    try:
-        blob_url = await upload_to_vercel_blob(
-            pathname,
-            content,
-            content_type=content_type,
-        )
-    except RuntimeError as exc:
-        # Keep internal storage credentials/errors out
-        # of the API response.
-        print(f"Vercel Blob upload failed: {exc!r}")
-
+    if settings.blob_store_id:
+        try:
+            blob_url = await upload_to_vercel_blob(
+                pathname,
+                content,
+                content_type=content_type,
+            )
+        except RuntimeError as exc:
+            logger.exception("Vercel Blob upload failed")
+            raise HTTPException(
+                status_code=502,
+                detail="Image storage upload failed",
+            ) from exc
+    elif not settings.is_development:
         raise HTTPException(
-            status_code=502,
-            detail="Image storage upload failed",
-        ) from exc
+            status_code=503,
+            detail="Image storage is not configured",
+        )
+    else:
+        blob_url = store_image_locally(filename, content)
 
     # ----------------------------------------
     # 6. Save Blob URL in PostgreSQL
@@ -277,3 +274,10 @@ async def upload_product_image(
         url=blob_url,
         alt=product.name,
     )
+
+
+def store_image_locally(filename: str, content: bytes) -> str:
+    product_dir = Path(settings.upload_dir) / "products"
+    product_dir.mkdir(parents=True, exist_ok=True)
+    (product_dir / filename).write_bytes(content)
+    return f"/uploads/products/{filename}"
