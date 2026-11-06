@@ -101,7 +101,7 @@ export default function ProductPage() {
               aria-label="Decrease quantity"
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="text-[var(--color-steel)] disabled:opacity-30"
+              className="flex min-h-12 min-w-12 items-center justify-center rounded-full text-[var(--color-steel)] transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-30"
             >
               <Minus size={14} />
             </button>
@@ -112,7 +112,7 @@ export default function ProductPage() {
               aria-label="Increase quantity"
               disabled={quantity >= product.stock}
               onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-              className="text-[var(--color-steel)] disabled:opacity-30"
+              className="flex min-h-12 min-w-12 items-center justify-center rounded-full text-[var(--color-steel)] transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-30"
             >
               <Plus size={14} />
             </button>
@@ -128,7 +128,7 @@ export default function ProductPage() {
           data-cursor
           onClick={() => toggleWishlist(product)}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className="rounded-full border border-white/10 bg-[var(--color-panel)] p-3"
+          className="flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/10 bg-[var(--color-panel)] transition-colors hover:bg-white/5"
         >
           <Heart
             size={18}
@@ -147,6 +147,8 @@ export default function ProductPage() {
               key={image.id}
               type="button"
               data-cursor
+              aria-label={`Show image ${index + 1} of ${product.images.length}`}
+              aria-pressed={index === selectedIndex}
               onClick={() => setSelectedIndex(index)}
               className={`flex-shrink-0 overflow-hidden rounded-xl border-2 transition-colors ${
                 index === selectedIndex ? "border-[var(--color-signal)]" : "border-transparent"
