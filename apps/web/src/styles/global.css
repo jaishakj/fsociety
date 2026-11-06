@@ -23,6 +23,13 @@ body {
   cursor: none;
 }
 
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  cursor: text !important;
+}
+
 @media (hover: none), (pointer: coarse) {
   body {
     cursor: auto;

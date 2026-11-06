@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session, selectinload
 from app.modules.products.models import Category, Product, ProductStatus
 
 
+def escape_like_query(search: str) -> str:
+    return search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def get_category_by_slug(db: Session, slug: str) -> Category | None:
     return db.scalar(select(Category).where(Category.slug == slug))
 
@@ -53,8 +57,14 @@ def list_products(
     if category_slug:
         stmt = stmt.join(Category).where(Category.slug == category_slug)
     if search:
-        like = f"%{search}%"
-        stmt = stmt.where(or_(Product.name.ilike(like), Product.description.ilike(like)))
+        escaped = escape_like_query(search)
+        like = f"%{escaped}%"
+        stmt = stmt.where(
+            or_(
+                Product.name.ilike(like, escape="\\"),
+                Product.description.ilike(like, escape="\\"),
+            )
+        )
     if min_price is not None:
         stmt = stmt.where(Product.price >= min_price)
     if max_price is not None:
