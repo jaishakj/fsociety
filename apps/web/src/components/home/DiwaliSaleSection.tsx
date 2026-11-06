@@ -38,24 +38,27 @@ export function DiwaliSaleSection() {
         </div>
         <div className="flex flex-col items-start gap-4 md:items-end">
           {activeCountdown ? (
-            <div className="flex gap-2 sm:gap-3" aria-label="Time remaining in the Diwali campaign">
-              {([
-                [activeCountdown.days, "Days"],
-                [activeCountdown.hours, "Hours"],
-                [activeCountdown.minutes, "Minutes"],
-                [activeCountdown.seconds, "Seconds"],
-              ] as const).map(([value, label]) => (
-                <div key={label} className="min-w-14 text-center sm:min-w-16">
-                  <span className="block font-mono text-2xl tabular-nums text-[var(--color-paper)] sm:text-3xl">
-                    {String(value).padStart(label === "Days" ? 1 : 2, "0")}
-                  </span>
-                  <span className="mt-1 block text-[10px] uppercase tracking-wider text-[var(--color-steel)]">{label}</span>
-                </div>
-              ))}
+            <div className="rounded-2xl border border-white/10 bg-[var(--color-void)]/40 px-4 py-3">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-steel)]">Until Diwali</p>
+              <div className="flex gap-2 sm:gap-3" role="timer" aria-label="Time remaining until Diwali">
+                {([
+                  [activeCountdown.days, "Days"],
+                  [activeCountdown.hours, "Hours"],
+                  [activeCountdown.minutes, "Minutes"],
+                  [activeCountdown.seconds, "Seconds"],
+                ] as const).map(([value, label]) => (
+                  <div key={label} className="min-w-12 text-center sm:min-w-14">
+                    <span className="block font-mono text-2xl tabular-nums text-[var(--color-paper)] sm:text-3xl">
+                      {String(value).padStart(label === "Days" ? 1 : 2, "0")}
+                    </span>
+                    <span className="mt-1 block text-[10px] uppercase tracking-wider text-[var(--color-steel)]">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-[var(--color-steel)]" role="status">
-              {countdown?.expired ? "This campaign has ended." : "Campaign dates will be announced soon."}
+              {countdown?.expired ? "Diwali has arrived." : "Diwali date will be announced soon."}
             </p>
           )}
           {activeCountdown ? (
