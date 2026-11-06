@@ -23,6 +23,76 @@ body {
   cursor: none;
 }
 
+.firefly-field {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.firefly {
+  position: absolute;
+  top: var(--firefly-y);
+  left: var(--firefly-x);
+  width: var(--firefly-size);
+  height: var(--firefly-size);
+  border-radius: 50%;
+  background: #ffe6a2;
+  box-shadow:
+    0 0 calc(var(--firefly-glow) * 0.45) 1px rgb(255 193 92 / 75%),
+    0 0 var(--firefly-glow) 2px rgb(255 112 55 / 26%);
+  opacity: 0.2;
+  animation: firefly-flight var(--firefly-duration) ease-in-out var(--firefly-delay) infinite alternate;
+  will-change: transform, opacity;
+}
+
+.firefly-field--paused .firefly {
+  animation-play-state: paused;
+}
+
+.firefly-toggle {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 20;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 999px;
+  background: rgb(23 24 28 / 82%);
+  color: var(--color-steel);
+  opacity: 0.68;
+  backdrop-filter: blur(8px);
+  transition: opacity 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.firefly-toggle:hover,
+.firefly-toggle:focus-visible {
+  border-color: rgb(255 193 92 / 55%);
+  color: var(--color-paper);
+  opacity: 1;
+}
+
+@keyframes firefly-flight {
+  0% {
+    opacity: 0.12;
+    transform: translate3d(0, 0, 0) scale(0.72);
+  }
+
+  48% {
+    opacity: 0.68;
+    transform: translate3d(calc(var(--firefly-drift-x) * 0.55), calc(var(--firefly-drift-y) * 0.7), 0) scale(1.08);
+  }
+
+  100% {
+    opacity: 0.28;
+    transform: translate3d(var(--firefly-drift-x), var(--firefly-drift-y), 0) scale(0.84);
+  }
+}
+
 input,
 textarea,
 select,
@@ -102,6 +172,11 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .firefly-field,
+  .firefly-toggle {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {
