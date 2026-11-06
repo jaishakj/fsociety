@@ -1,16 +1,20 @@
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProducts } from "@/hooks/useProducts";
 import { useSearchStore } from "@/stores/searchStore";
+import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
 
 export function SearchModal() {
   const isOpen = useSearchStore((state) => state.isOpen);
   const close = useSearchStore((state) => state.close);
+  const reduceMotion = useReducedMotion();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const dialogRef = useDialogFocusRestore<HTMLDivElement>(isOpen);
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedQuery(query), 300);
@@ -35,50 +39,56 @@ export function SearchModal() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={reduceMotion ? { duration: 0.12 } : undefined}
             onClick={close}
           />
           <motion.div
-            className="fixed inset-x-4 top-24 z-[998] mx-auto max-w-xl rounded-3xl border border-white/10 bg-[var(--color-panel)] p-4"
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search products"
+            onKeyDown={(event) => handleDialogKeyDown(event, close)}
+            className="fixed inset-x-4 top-20 z-[998] mx-auto max-h-[calc(100dvh-6rem)] max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-[var(--color-panel)] p-4"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -16 }}
+            transition={reduceMotion ? { duration: 0.12 } : { type: "spring", bounce: 0, duration: 0.3 }}
           >
-            <div className="flex items-center gap-3 rounded-full border border-white/10 bg-black/30 px-4 py-3">
+            <div className="flex min-h-14 items-center gap-3 rounded-full border border-white/10 bg-[var(--color-void)] px-4 py-2 transition-colors focus-within:border-[var(--color-signal)] focus-within:ring-1 focus-within:ring-[var(--color-signal)]/50">
               <Search size={18} className="text-[var(--color-steel)]" />
               <input
-                autoFocus
-                type="text"
+                type="search"
+                aria-label="Search products"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products..."
                 className="flex-1 bg-transparent text-sm text-[var(--color-paper)] placeholder:text-[var(--color-steel)] focus:outline-none"
               />
-              <button type="button" data-cursor onClick={close} aria-label="Close search">
+              <button type="button" data-cursor onClick={close} aria-label="Close search" className="flex min-h-12 min-w-12 items-center justify-center rounded-full hover:bg-white/5">
                 <X size={18} className="text-[var(--color-steel)]" />
               </button>
             </div>
 
-            <div className="mt-4 max-h-96 overflow-y-auto">
+            <div className="mt-4" aria-busy={isLoading}>
               {debouncedQuery.length <= 1 ? (
                 <p className="py-6 text-center text-sm text-[var(--color-steel)]">
                   Type at least 2 characters to search.
                 </p>
               ) : isLoading ? (
-                <p className="py-6 text-center text-sm text-[var(--color-steel)]">Searching&hellip;</p>
+                <p className="py-6 text-center text-sm text-[var(--color-steel)]" role="status">Searching&hellip;</p>
               ) : results.length === 0 ? (
                 <p className="py-6 text-center text-sm text-[var(--color-steel)]">
                   No products match &ldquo;{debouncedQuery}&rdquo;.
                 </p>
               ) : (
-                <ul className="space-y-2">
+                <ul aria-label="Search results" className="space-y-1">
                   {results.map((product) => (
                     <li key={product.id}>
                       <Link
                         to={`/product/${product.slug}`}
                         data-cursor
                         onClick={close}
-                        className="flex items-center gap-3 rounded-2xl p-2 hover:bg-white/5"
+                        className="flex min-h-16 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-white/5"
                       >
                         {product.images[0]?.url ? (
                           <img

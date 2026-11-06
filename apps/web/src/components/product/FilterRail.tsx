@@ -8,36 +8,44 @@ interface FilterRailProps {
 
 export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
   return (
-    <aside className="rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
+    <aside aria-label="Product filters" className="rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          data-cursor
-          onClick={() => onChange({ ...filters, category: undefined, page: 1 })}
-          className={`rounded-full border px-3 py-1 transition-colors ${
-            !filters.category ? "border-[var(--color-signal)] text-[var(--color-signal)]" : "border-white/10"
-          }`}
-        >
-          All
-        </button>
-        {categories.map((category) => (
+        <div role="group" aria-label="Filter by category" className="flex flex-wrap items-center gap-2">
           <button
-            key={category.id}
             data-cursor
-            onClick={() => onChange({ ...filters, category: category.slug, page: 1 })}
-            className={`rounded-full border px-3 py-1 transition-colors ${
-              filters.category === category.slug
-                ? "border-[var(--color-signal)] text-[var(--color-signal)]"
-                : "border-white/10"
+            type="button"
+            aria-pressed={!filters.category}
+            onClick={() => onChange({ ...filters, category: undefined, page: 1 })}
+            className={`min-h-12 rounded-full border px-4 transition-colors ${
+              !filters.category ? "border-[var(--color-signal)] bg-[var(--color-signal)]/10 text-[var(--color-signal)]" : "border-white/10 hover:bg-white/5"
             }`}
           >
-            {category.name}
+            All
           </button>
-        ))}
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              data-cursor
+              type="button"
+              aria-pressed={filters.category === category.slug}
+              onClick={() => onChange({ ...filters, category: category.slug, page: 1 })}
+              className={`min-h-12 rounded-full border px-4 transition-colors ${
+                filters.category === category.slug
+                  ? "border-[var(--color-signal)] bg-[var(--color-signal)]/10 text-[var(--color-signal)]"
+                  : "border-white/10 hover:bg-white/5"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+        <label htmlFor="product-sort" className="sr-only">Sort products</label>
         <select
+          id="product-sort"
           data-cursor
           value={filters.sort ?? "newest"}
           onChange={(e) => onChange({ ...filters, sort: e.target.value as ProductFilters["sort"] })}
-          className="ml-auto rounded-full border border-white/10 bg-transparent px-3 py-1 text-[var(--color-paper)]"
+          className="min-h-12 min-w-40 rounded-full border border-white/10 bg-[var(--color-panel)] px-4 text-[var(--color-paper)] sm:ml-auto"
         >
           <option value="newest">Newest</option>
           <option value="price_asc">Price: Low to High</option>
@@ -45,9 +53,10 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
         </select>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
-        <span>Price</span>
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+        <span className="mr-1">Price range</span>
         <input
+          aria-label="Minimum price"
           type="number"
           min={0}
           placeholder="Min"
@@ -56,10 +65,11 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
           onChange={(e) =>
             onChange({ ...filters, min_price: e.target.value ? Number(e.target.value) : undefined, page: 1 })
           }
-          className="w-20 rounded-full border border-white/10 bg-transparent px-3 py-1 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
+          className="min-h-12 w-24 rounded-xl border border-white/10 bg-[var(--color-void)] px-3 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
         />
         <span>&ndash;</span>
         <input
+          aria-label="Maximum price"
           type="number"
           min={0}
           placeholder="Max"
@@ -68,13 +78,14 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
           onChange={(e) =>
             onChange({ ...filters, max_price: e.target.value ? Number(e.target.value) : undefined, page: 1 })
           }
-          className="w-20 rounded-full border border-white/10 bg-transparent px-3 py-1 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
+          className="min-h-12 w-24 rounded-xl border border-white/10 bg-[var(--color-void)] px-3 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
         />
         {filters.min_price || filters.max_price ? (
           <button
             data-cursor
+            type="button"
             onClick={() => onChange({ ...filters, min_price: undefined, max_price: undefined, page: 1 })}
-            className="text-[var(--color-signal)]"
+            className="min-h-12 rounded-full px-3 text-[var(--color-signal)] hover:bg-white/5"
           >
             Clear
           </button>

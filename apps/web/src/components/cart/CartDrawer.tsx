@@ -1,17 +1,21 @@
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
 import { useCartStore } from "@/stores/cartStore";
 
 export function CartDrawer() {
   const items = useCartStore((state) => state.items);
   const isOpen = useCartStore((state) => state.isOpen);
   const close = useCartStore((state) => state.close);
+  const reduceMotion = useReducedMotion();
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const totalPrice = useCartStore((state) => state.totalPrice());
+
+  const dialogRef = useDialogFocusRestore<HTMLElement>(isOpen);
 
   return (
     <AnimatePresence>
@@ -22,22 +26,28 @@ export function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={reduceMotion ? { duration: 0.12 } : undefined}
             onClick={close}
           />
           <motion.aside
-            className="fixed inset-y-0 right-0 z-[998] flex w-full max-w-sm flex-col overflow-y-auto bg-[var(--color-panel)] p-6"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bag-title"
+            onKeyDown={(event) => handleDialogKeyDown(event, close)}
+            className="fixed inset-y-0 right-0 z-[998] flex w-full max-w-sm flex-col overflow-y-auto border-l border-white/10 bg-[var(--color-panel)] p-6"
+            initial={reduceMotion ? { opacity: 0 } : { x: "100%" }}
+            animate={reduceMotion ? { opacity: 1 } : { x: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { x: "100%" }}
+            transition={reduceMotion ? { duration: 0.12 } : { type: "spring", bounce: 0, duration: 0.35 }}
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl text-[var(--color-paper)]">Your bag</h2>
+              <h2 id="bag-title" className="font-display text-xl text-[var(--color-paper)]">Your bag</h2>
               <button
                 data-cursor
                 onClick={close}
-                aria-label="Close"
-                className="rounded-full p-2 hover:bg-white/5"
+                aria-label="Close bag"
+                className="flex min-h-12 min-w-12 items-center justify-center rounded-full hover:bg-white/5"
               >
                 <X size={18} />
               </button>
@@ -60,12 +70,12 @@ export function CartDrawer() {
                         <p className="font-mono mt-1 text-xs text-[var(--color-signal)]">
                           {item.currency} {item.price}
                         </p>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex items-center gap-1">
                           <button
                             data-cursor
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="rounded-full border border-white/10 px-2 text-xs text-[var(--color-steel)]"
-                            aria-label="Decrease quantity"
+                            className="min-h-12 min-w-10 rounded-full border border-white/10 text-xs text-[var(--color-steel)] transition-colors hover:bg-white/5"
+                            aria-label={`Decrease quantity of ${item.name}`}
                           >
                             &minus;
                           </button>
@@ -73,8 +83,8 @@ export function CartDrawer() {
                           <button
                             data-cursor
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="rounded-full border border-white/10 px-2 text-xs text-[var(--color-steel)]"
-                            aria-label="Increase quantity"
+                            className="min-h-12 min-w-10 rounded-full border border-white/10 text-xs text-[var(--color-steel)] transition-colors hover:bg-white/5"
+                            aria-label={`Increase quantity of ${item.name}`}
                           >
                             +
                           </button>
@@ -83,8 +93,8 @@ export function CartDrawer() {
                       <button
                         data-cursor
                         onClick={() => removeItem(item.id)}
-                        aria-label="Remove item"
-                        className="text-[var(--color-steel)] transition-colors hover:text-[var(--color-signal)] active:translate-y-px"
+                        aria-label={`Remove ${item.name} from bag`}
+                        className="flex min-h-12 min-w-12 items-center justify-center rounded-full text-[var(--color-steel)] transition-colors hover:bg-white/5 hover:text-[var(--color-signal)]"
                       >
                         <X size={14} />
                       </button>

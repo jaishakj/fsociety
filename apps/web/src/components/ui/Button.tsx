@@ -15,11 +15,11 @@ interface ButtonProps extends NativeButtonProps {
 export function Button({ children, variant = "primary", className = "", ...rest }: ButtonProps) {
   const reduceMotion = useReducedMotion();
   const base =
-    "inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-colors";
+    "inline-flex min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50";
   const styles =
     variant === "primary"
-      ? "bg-[var(--color-signal)] text-[var(--color-void)]"
-      : "border border-[var(--color-steel)] text-[var(--color-paper)]";
+      ? "bg-[var(--color-signal)] text-[var(--color-void)] hover:brightness-110"
+      : "border border-[var(--color-steel)] text-[var(--color-paper)] hover:bg-white/5";
 
   return (
     <motion.button

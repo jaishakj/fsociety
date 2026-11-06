@@ -59,7 +59,7 @@ export function ProductCard({ product }: { product: Product }) {
           data-cursor
           onClick={onWishlistClick}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className="absolute right-2 top-2 rounded-full border border-white/15 bg-[var(--color-panel)] p-2 transition-colors hover:bg-[var(--color-void)]"
+          className="absolute right-2 top-2 flex min-h-12 min-w-12 items-center justify-center rounded-full border border-white/15 bg-[var(--color-panel)] transition-colors hover:bg-[var(--color-void)]"
         >
           <Heart
             size={16}
