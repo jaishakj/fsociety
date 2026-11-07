@@ -1,9 +1,15 @@
 import re
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.products.models import Category, Product, ProductImage, ProductStatus
-from app.modules.products.schemas import CategoryCreate, ProductCreate, ProductUpdate
+from app.modules.products.schemas import (
+    CategoryCreate,
+    CategoryUpdate,
+    ProductCreate,
+    ProductUpdate,
+)
 
 
 def slugify(value: str) -> str:
@@ -22,6 +28,23 @@ def create_category(db: Session, data: CategoryCreate) -> Category:
     db.commit()
     db.refresh(category)
     return category
+
+
+def update_category(db: Session, category: Category, data: CategoryUpdate) -> Category:
+    category.name = data.name.strip()
+    db.commit()
+    db.refresh(category)
+    return category
+
+
+def delete_category(db: Session, category: Category) -> bool:
+    db.delete(category)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return False
+    return True
 
 
 def create_product(db: Session, data: ProductCreate) -> Product:
