@@ -11,25 +11,26 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.2",
     "@tanstack/react-query": "^5.56.2",
-    "zustand": "^4.5.5",
-    "zod": "^3.23.8",
     "axios": "^1.7.7",
+    "falling-leaves": "^0.1.0",
+    "gsap": "^3.13.0",
     "lucide-react": "^0.446.0",
     "motion": "^11.11.9",
     "qrcode": "^1.5.4",
-    "gsap": "^3.13.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "@tailwindcss/vite": "^4.0.0",
     "tailwindcss": "^4.0.0",
-    "@types/qrcode": "^1.5.5",
     "typescript": "^5.5.4",
     "vite": "^5.4.6"
   }
