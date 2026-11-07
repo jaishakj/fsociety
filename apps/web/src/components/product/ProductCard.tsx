@@ -42,7 +42,7 @@ export function ProductCard({ product }: { product: Product }) {
       data-cursor
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      className="group block rounded-3xl border border-white/10 bg-[var(--color-panel)] p-4"
+      className="product-card group block min-w-0 rounded-3xl border border-white/10 bg-[var(--color-panel)] p-3 sm:p-4"
       style={{ perspective: "800px" }}
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-black/40">
@@ -51,7 +51,7 @@ export function ProductCard({ product }: { product: Product }) {
             src={image}
             alt={product.images[0]?.alt || product.name}
             loading="lazy"
-            className="h-full w-full object-cover"
+            className="product-card-image h-full w-full object-cover"
           />
         ) : null}
         <button
@@ -67,9 +67,9 @@ export function ProductCard({ product }: { product: Product }) {
           />
         </button>
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <h3 className="text-sm text-[var(--color-paper)]">{product.name}</h3>
-        <span className="font-mono rounded-full bg-black/30 px-2 py-1 text-xs text-[var(--color-signal)]">
+      <div className="mt-3 flex min-w-0 flex-col items-start gap-2 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="line-clamp-2 min-w-0 text-sm text-[var(--color-paper)]">{product.name}</h3>
+        <span className="font-mono max-w-full rounded-full bg-black/30 px-2 py-1 text-xs text-[var(--color-signal)]">
           {product.currency} {product.price}
         </span>
       </div>

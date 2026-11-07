@@ -9,8 +9,8 @@ interface FilterRailProps {
 export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
   return (
     <aside aria-label="Product filters" className="rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Filter by category" className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+        <div role="group" aria-label="Filter by category" className="mobile-filter-scroll -mx-4 flex max-w-[calc(100%+2rem)] gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:max-w-full sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           <button
             data-cursor
             type="button"
@@ -45,7 +45,7 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
           data-cursor
           value={filters.sort ?? "newest"}
           onChange={(e) => onChange({ ...filters, sort: e.target.value as ProductFilters["sort"] })}
-          className="min-h-12 min-w-40 rounded-full border border-white/10 bg-[var(--color-panel)] px-4 text-[var(--color-paper)] sm:ml-auto"
+          className="min-h-12 w-full rounded-full border border-white/10 bg-[var(--color-panel)] px-4 text-[var(--color-paper)] sm:ml-auto sm:w-auto sm:min-w-40"
         >
           <option value="newest">Newest</option>
           <option value="price_asc">Price: Low to High</option>
