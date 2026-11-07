@@ -6,12 +6,14 @@ import { Footer } from "@/components/layout/Footer";
 import { IntroShowreel } from "@/components/layout/IntroShowreel";
 import { NavBar } from "@/components/layout/NavBar";
 import { SearchModal } from "@/components/search/SearchModal";
+import { FallingLeavesField } from "@/components/ui/FallingLeavesField";
 import { FireflyField } from "@/components/ui/FireflyField";
 
 export function Shell() {
   return (
     <div className="relative isolate min-h-screen bg-[var(--color-void)] px-4 pb-4 pt-4">
       <IntroShowreel />
+      <FallingLeavesField />
       <FireflyField />
       <CustomCursor />
       <CartDrawer />
