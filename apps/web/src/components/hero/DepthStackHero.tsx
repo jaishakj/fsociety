@@ -28,14 +28,30 @@ export function DepthStackHero({
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    gsap.fromTo(text, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" });
+    const intro = gsap.timeline();
+    intro.fromTo(text, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" });
     gsap.fromTo(
       image,
       { opacity: 0, y: 40, scale: 0.98 },
       { opacity: 1, y: 0, scale: 1, duration: 1, ease: "power3.out", delay: 0.1 },
     );
 
-    if (window.matchMedia("(hover: none), (pointer: coarse)").matches) return;
+    const touchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+    if (touchDevice) {
+      const float = gsap.to(image, {
+        y: -6,
+        duration: 3.2,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+        delay: 1.1,
+      });
+      return () => {
+        intro.kill();
+        float.kill();
+        gsap.killTweensOf(image);
+      };
+    }
 
     function onMove(e: MouseEvent) {
       const rect = container!.getBoundingClientRect();
@@ -55,6 +71,8 @@ export function DepthStackHero({
     return () => {
       container.removeEventListener("mousemove", onMove);
       container.removeEventListener("mouseleave", onLeave);
+      intro.kill();
+      gsap.killTweensOf([image, text]);
     };
   }, []);
 
