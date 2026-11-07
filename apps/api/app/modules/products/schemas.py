@@ -26,6 +26,10 @@ class CategoryCreate(BaseModel):
     slug: str | None = None
 
 
+class CategoryUpdate(BaseModel):
+    name: str = Field(min_length=2, max_length=100, strip_whitespace=True)
+
+
 class ProductCreate(BaseModel):
     name: str = Field(min_length=2, max_length=255)
     slug: str | None = None

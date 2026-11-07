@@ -45,6 +45,14 @@ uvicorn app.main:app --reload
 
 API docs at `http://localhost:8000/docs`. Health check at `/health`.
 
+### Production database migrations
+
+Vercel deploys the API code but does not run Alembic migrations. Before a
+production deploy that includes database changes, run `alembic upgrade head`
+from `apps/api` with `DATABASE_URL` set to the same production database used by
+the API. Confirm the migration succeeds before routing traffic to code that
+depends on the new schema.
+
 To use the admin endpoints (product CRUD, import, image upload), register a
 user via `POST /api/v1/auth/register`, then promote them to admin manually —
 the register endpoint always creates a `user`-role account on purpose, so a

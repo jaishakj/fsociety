@@ -5,7 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile, status
 from vercel.oidc.aio import get_vercel_oidc_token
 
 from app.api.deps import AdminUser, DbSession
@@ -16,6 +16,7 @@ from app.modules.products.importers import import_products
 from app.modules.products.schemas import (
     CategoryCreate,
     CategoryOut,
+    CategoryUpdate,
     ImportResult,
     ProductCreate,
     ProductImageOut,
@@ -42,6 +43,47 @@ def create_category(
         )
 
     return service.create_category(db, data)
+
+
+@router.put("/categories/{category_id}", response_model=CategoryOut)
+def update_category(
+    category_id: UUID,
+    data: CategoryUpdate,
+    db: DbSession,
+    _admin: AdminUser,
+):
+    category = repository.get_category_by_id(db, category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    # Keep the existing slug stable so storefront URLs and filters keep working.
+    return service.update_category(db, category, data)
+
+
+@router.delete(
+    "/categories/{category_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_category(
+    category_id: UUID,
+    db: DbSession,
+    _admin: AdminUser,
+):
+    category = repository.get_category_by_id(db, category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if repository.category_has_products(db, category_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Category has products. Reassign or delete its products before deleting the category.",
+        )
+    if not service.delete_category(db, category):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Category has products. Reassign or delete its products before deleting the category.",
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 ALLOWED_IMPORT_EXTENSIONS = {".csv", ".json"}
 MAX_IMPORT_SIZE_BYTES = 5 * 1024 * 1024

@@ -14,6 +14,16 @@ def get_category_by_slug(db: Session, slug: str) -> Category | None:
     return db.scalar(select(Category).where(Category.slug == slug))
 
 
+def get_category_by_id(db: Session, category_id: UUID) -> Category | None:
+    return db.get(Category, category_id)
+
+
+def category_has_products(db: Session, category_id: UUID) -> bool:
+    return db.scalar(
+        select(Product.id).where(Product.category_id == category_id).limit(1)
+    ) is not None
+
+
 def list_categories(db: Session) -> list[Category]:
     return list(db.scalars(select(Category).order_by(Category.name)))
 
