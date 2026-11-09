@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { DiwaliSaleSection } from "@/components/home/DiwaliSaleSection";
@@ -11,15 +12,39 @@ import { useCategories, useProducts } from "@/hooks/useProducts";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import type { Product } from "@/types/product";
 
+const EMPTY_PRODUCTS: Product[] = [];
+const NEW_ARRIVALS_COUNT = 4;
+
 export default function HomePage() {
   usePageMeta("FSOCIETY | Dresses built to stand out", "Discover the latest FSOCIETY styles and shop the current collection.", "/");
-  const { data, isLoading, isError, refetch } = useProducts({ page: 1, page_size: 4, sort: "newest" });
+  const { data, isLoading, isError, refetch } = useProducts({ page: 1, page_size: 100, sort: "newest" });
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
-  const sareeCategory = categories?.find((category) => /saree/i.test(`${category.name} ${category.slug}`));
-  const sarees = useProducts(
-    { page: 1, page_size: 4, sort: "newest", category: sareeCategory?.slug },
-    Boolean(sareeCategory),
+  const products = data?.items ?? EMPTY_PRODUCTS;
+  const sareeProducts = useMemo(
+    () => products.filter((product) => isSareeCategory(product.category.name, product.category.slug)),
+    [products],
   );
+  const sareeCategory = categories?.find((category) => isSareeCategory(category.name, category.slug)) ?? sareeProducts[0]?.category;
+  const newArrivals = products.slice(0, NEW_ARRIVALS_COUNT);
+  const dressProducts = useMemo(() => {
+    const newArrivalIds = new Set(products.slice(0, NEW_ARRIVALS_COUNT).map((product) => product.id));
+    return products.filter(
+      (product) =>
+        !newArrivalIds.has(product.id) &&
+        !isSareeCategory(product.category.name, product.category.slug) &&
+        !isExcludedClothingCategory(product.category.name, product.category.slug),
+    );
+  }, [products]);
+  const [sareesForVisit, setSareesForVisit] = useState<Product[]>([]);
+  const [dressesForVisit, setDressesForVisit] = useState<Product[]>([]);
+
+  useEffect(() => {
+    setSareesForVisit(chooseVisitRecommendations(sareeProducts, "fsociety.home.sarees", NEW_ARRIVALS_COUNT));
+  }, [sareeProducts]);
+
+  useEffect(() => {
+    setDressesForVisit(chooseVisitRecommendations(dressProducts, "fsociety.home.dresses", dressProducts.length));
+  }, [dressProducts]);
 
   return (
     <div className="relative pb-24">
@@ -67,8 +92,12 @@ export default function HomePage() {
         )}
       </section>
 
-      {sareeCategory && (sarees.data?.items.length ?? 0) > 0 ? (
-        <ProductSection eyebrow="The saree edit" title="Timeless drapes. Contemporary attitude." products={sarees.data!.items} href={`/shop?category=${encodeURIComponent(sareeCategory.slug)}`} linkLabel="View the edit" />
+      {sareeCategory && sareesForVisit.length > 0 ? (
+        <ProductSection eyebrow="The saree edit" title="Timeless drapes. Contemporary attitude." products={sareesForVisit} href={`/shop?category=${encodeURIComponent(sareeCategory.slug)}`} linkLabel="View the edit" />
+      ) : null}
+
+      {dressesForVisit.length > 0 ? (
+        <ProductSection eyebrow="Beyond the latest drop" title="The clothing edit" products={dressesForVisit} href="/shop" linkLabel="Browse all styles" />
       ) : null}
 
       <section className="relative z-10 mt-20 grid overflow-hidden rounded-3xl bg-[var(--color-signal)] text-[var(--color-void)] md:grid-cols-[1fr_auto] md:items-end">
@@ -94,11 +123,11 @@ export default function HomePage() {
           <StateMessage title="Couldn't load new arrivals" action={<Button variant="outline" data-cursor onClick={() => refetch()}>Retry</Button>} />
         ) : isLoading ? (
           <p className="text-[var(--color-steel)]">Loading…</p>
-        ) : (data?.items.length ?? 0) === 0 ? (
+        ) : newArrivals.length === 0 ? (
           <p className="text-[var(--color-steel)]">New pieces will appear here as they arrive.</p>
         ) : (
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-            {data!.items.map((product) => <ProductCard key={product.id} product={product} />)}
+            {newArrivals.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         )}
       </section>
@@ -130,4 +159,53 @@ function ProductSection({ eyebrow, title, products, href, linkLabel }: {
       <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-5 lg:grid-cols-4">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div>
     </section>
   );
+}
+
+function isSareeCategory(name: string, slug: string): boolean {
+  return /saree/i.test(`${name} ${slug}`);
+}
+
+function isExcludedClothingCategory(name: string, slug: string): boolean {
+  const category = `${name} ${slug}`.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  return /\b(?:foot\s*wear|footwear|shoes?|sandals?|slippers?|sneakers?|boots?|inner\s*wear|underwear|lingerie|intimates?|bras?|briefs?)\b/.test(category);
+}
+
+function chooseVisitRecommendations(products: Product[], storageKey: string, limit: number): Product[] {
+  if (products.length === 0 || limit <= 0) return [];
+
+  let previousIds: string[] = [];
+  try {
+    const stored = JSON.parse(window.sessionStorage.getItem(storageKey) ?? "[]");
+    if (Array.isArray(stored)) previousIds = stored.filter((id): id is string => typeof id === "string");
+  } catch {
+    // Storage can be unavailable in private browsing; random recommendations still work.
+  }
+
+  const count = Math.min(limit, products.length);
+  const previouslySeen = new Set(previousIds);
+  const fresh = shuffleProducts(products.filter((product) => !previouslySeen.has(product.id)));
+  const selectedIds = new Set(fresh.slice(0, count).map((product) => product.id));
+  const remaining = shuffleProducts(products.filter((product) => !selectedIds.has(product.id)));
+  let selection = [...fresh.slice(0, count), ...remaining].slice(0, count);
+
+  if (selection.length > 1 && selection.map((product) => product.id).join("|") === previousIds.join("|")) {
+    selection = [...selection.slice(1), selection[0]];
+  }
+
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify(selection.map((product) => product.id)));
+  } catch {
+    // Storage can be unavailable in private browsing; the current view remains randomized.
+  }
+
+  return selection;
+}
+
+function shuffleProducts(products: Product[]): Product[] {
+  const shuffled = [...products];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
