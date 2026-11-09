@@ -79,7 +79,7 @@ export function DepthStackHero({
   return (
     <section
       ref={containerRef}
-      className="relative mt-6 rounded-[32px] border border-white/10 bg-[var(--color-panel)] px-6 py-16 md:px-16 md:py-24"
+      className="relative mt-3 rounded-[28px] border border-white/10 bg-[var(--color-panel)] px-5 py-7 sm:mt-6 sm:px-8 sm:py-10 md:rounded-[32px] md:px-16 md:py-24"
       style={{ perspective: "1000px" }}
     >
       <div
@@ -89,28 +89,28 @@ export function DepthStackHero({
         {title}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative z-10 flex flex-col items-center gap-5 sm:gap-7 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-md">
-          <h1 className="font-display text-5xl text-[var(--color-paper)] md:text-6xl">{title}</h1>
-          {eyebrow ? <p className="mt-3 text-sm text-[var(--color-steel)]">{eyebrow}</p> : null}
-          <p className="mt-4 text-[var(--color-steel)]">{subtitle}</p>
+          <h1 className="font-display text-4xl text-[var(--color-paper)] sm:text-5xl md:text-6xl">{title}</h1>
+          {eyebrow ? <p className="mt-2 text-xs text-[var(--color-steel)] sm:text-sm">{eyebrow}</p> : null}
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-[var(--color-steel)] sm:text-base md:mt-4">{subtitle}</p>
         </div>
       </div>
 
       {imageUrl ? (
         <div
           ref={imageRef}
-          className="relative z-10 mx-auto mt-8 w-full max-w-sm lg:absolute lg:right-10 lg:-top-4 lg:bottom-0 lg:mx-0 lg:mt-0 lg:w-auto xl:right-16"
+          className="relative z-10 mx-auto mt-5 w-full max-w-[18rem] sm:mt-7 sm:max-w-sm lg:absolute lg:right-10 lg:-top-4 lg:bottom-0 lg:mx-0 lg:mt-0 lg:w-auto xl:right-16"
           style={{ transformStyle: "preserve-3d" }}
         >
           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:h-full md:w-auto">
-            <img src={imageUrl} alt={title} className="h-full w-full object-cover object-top" />
+            <img src={imageUrl} alt={title} className="h-full w-full object-contain object-center md:object-cover md:object-top" />
           </div>
         </div>
       ) : null}
 
       {specs.length > 0 ? (
-        <div className="relative z-10 mt-10 flex flex-wrap gap-3">
+        <div className="relative z-10 mt-5 flex flex-wrap gap-2 sm:mt-8 sm:gap-3">
           {specs.map((spec) => (
             <span
               key={spec.label}
