@@ -20,11 +20,16 @@ def test_png_is_verified_and_normalized() -> None:
     assert content.startswith(b"\x89PNG\r\n\x1a\n")
 
 
-def test_rejects_svg_and_mismatched_extension() -> None:
+def test_rejects_svg_and_strips_trailing_content() -> None:
     with pytest.raises(ValueError):
         validate_and_normalize_image("item.svg", b"<svg></svg>")
-    with pytest.raises(ValueError, match="malformed or contains trailing"):
-        validate_and_normalize_image("item.png", png_bytes() + b"<script>alert(1)</script>")
+
+    normalized, _, _ = validate_and_normalize_image(
+        "item.png", png_bytes() + b"<script>alert(1)</script>"
+    )
+    assert b"<script>" not in normalized
+    with Image.open(BytesIO(normalized)) as image:
+        image.verify()
 
 
 def test_rejects_extension_that_does_not_match_image_format() -> None:

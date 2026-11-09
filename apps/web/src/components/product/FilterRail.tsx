@@ -1,4 +1,5 @@
 import type { Category, ProductFilters } from "@/types/product";
+import { OriginDropdown } from "@/components/ui/origin-dropdown";
 
 interface FilterRailProps {
   categories: Category[];
@@ -7,6 +8,13 @@ interface FilterRailProps {
 }
 
 export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
+  const sortOptions = [
+    { value: "newest", label: "Newest" },
+    { value: "price_asc", label: "Price: Low to High" },
+    { value: "price_desc", label: "Price: High to Low" },
+  ] as const;
+  const selectedSort = sortOptions.find((option) => option.value === (filters.sort ?? "newest")) ?? sortOptions[0];
+
   return (
     <aside aria-label="Product filters" className="rounded-2xl border border-white/10 bg-[var(--color-panel)] p-4 text-sm text-[var(--color-steel)]">
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
@@ -39,18 +47,19 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
             </button>
           ))}
         </div>
-        <label htmlFor="product-sort" className="sr-only">Sort products</label>
-        <select
-          id="product-sort"
-          data-cursor
-          value={filters.sort ?? "newest"}
-          onChange={(e) => onChange({ ...filters, sort: e.target.value as ProductFilters["sort"] })}
-          className="min-h-12 w-full rounded-full border border-white/10 bg-[var(--color-panel)] px-4 text-[var(--color-paper)] sm:ml-auto sm:w-auto sm:min-w-40"
-        >
-          <option value="newest">Newest</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-        </select>
+        <OriginDropdown
+          side="bottom"
+          align="end"
+          triggerAriaLabel={`Sort products: ${selectedSort.label}`}
+          trigger={<span>{selectedSort.label}</span>}
+          className="sm:ml-auto"
+          items={sortOptions.map((option) => ({
+            id: option.value,
+            label: option.label,
+            selected: selectedSort.value === option.value,
+            onSelect: () => onChange({ ...filters, sort: option.value as ProductFilters["sort"] }),
+          }))}
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
