@@ -1,4 +1,3 @@
-import struct
 from io import BytesIO
 
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -11,29 +10,6 @@ IMAGE_FORMATS = {
 }
 MAX_IMAGE_PIXELS = 40_000_000
 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
-
-
-def _has_exact_container_end(content: bytes, image_format: str) -> bool:
-    if image_format == "JPEG":
-        return content.startswith(b"\xff\xd8\xff") and content.endswith(b"\xff\xd9")
-    if image_format == "WEBP":
-        return (
-            len(content) >= 12
-            and content[:4] == b"RIFF"
-            and content[8:12] == b"WEBP"
-            and struct.unpack_from("<I", content, 4)[0] + 8 == len(content)
-        )
-    if image_format == "PNG" and content.startswith(b"\x89PNG\r\n\x1a\n"):
-        offset = 8
-        while offset + 12 <= len(content):
-            size = struct.unpack_from(">I", content, offset)[0]
-            chunk_type = content[offset + 4 : offset + 8]
-            offset += size + 12
-            if offset > len(content):
-                return False
-            if chunk_type == b"IEND":
-                return size == 0 and offset == len(content)
-    return False
 
 
 def validate_and_normalize_image(filename: str, content: bytes) -> tuple[bytes, str, str]:
@@ -51,9 +27,6 @@ def validate_and_normalize_image(filename: str, content: bytes) -> tuple[bytes, 
     )
     if detected_format != expected_format:
         raise ValueError("Image extension does not match its content")
-    if not _has_exact_container_end(content, expected_format):
-        raise ValueError("Image data is malformed or contains trailing content")
-
     try:
         with Image.open(BytesIO(content)) as image:
             if image.format != expected_format:
