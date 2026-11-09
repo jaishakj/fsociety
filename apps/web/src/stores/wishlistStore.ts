@@ -10,6 +10,8 @@ export interface WishlistItem {
   price: string;
   currency: string;
   image: string | null;
+  categorySlug: string;
+  categoryName: string;
 }
 
 interface WishlistState {
@@ -40,6 +42,8 @@ export const useWishlistStore = create<WishlistState>()(
                 price: product.price,
                 currency: product.currency,
                 image: product.images[0]?.url ?? null,
+                categorySlug: product.category.slug,
+                categoryName: product.category.name,
               },
             ],
           };

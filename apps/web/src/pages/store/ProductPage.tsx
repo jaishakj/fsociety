@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { StateMessage } from "@/components/ui/StateMessage";
 import { useProduct, useRelatedProducts } from "@/hooks/useProducts";
+import { productUsesApparelSizes, type ProductSize } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { ProductSizePicker } from "@/components/product/ProductSizePicker";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -21,6 +23,7 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const addItem = useCartStore((state) => state.addItem);
   const isWishlisted = useWishlistStore((state) => (product ? state.has(product.id) : false));
   const toggleWishlist = useWishlistStore((state) => state.toggle);
@@ -28,6 +31,7 @@ export default function ProductPage() {
   useEffect(() => {
     setSelectedIndex(0);
     setQuantity(1);
+    setSelectedSize(null);
     setAdded(false);
   }, [slug]);
 
@@ -58,10 +62,10 @@ export default function ProductPage() {
   const activeImage = product.images[selectedIndex] ?? product.images[0];
   const outOfStock = product.stock <= 0;
   const lowStock = !outOfStock && product.stock <= LOW_STOCK_THRESHOLD;
+  const hasSizes = productUsesApparelSizes(product.category.slug, product.category.name);
 
   const handleAddToBag = () => {
-    addItem(product, quantity);
-    setAdded(true);
+    setAdded(addItem(product, quantity, selectedSize));
   };
 
   return (
@@ -91,6 +95,12 @@ export default function ProductPage() {
         imageUrl={activeImage?.url ?? ""}
         specs={[{ label: "Price", value: `${product.currency} ${product.price}` }]}
       />
+
+      {hasSizes ? (
+        <div className="relative z-10 mt-8 rounded-2xl border border-white/10 bg-[var(--color-panel)] p-5 sm:p-6">
+          <ProductSizePicker value={selectedSize} onChange={setSelectedSize} />
+        </div>
+      ) : null}
 
       <div className="relative z-10 mt-10 flex flex-wrap items-center gap-4">
         {!outOfStock ? (

@@ -60,6 +60,7 @@ export default function WishlistPage() {
                     price: item.price,
                     currency: item.currency,
                     images: item.image ? [{ id: item.id, url: item.image, alt: null, position: 0 }] : [],
+                    category: { slug: item.categorySlug ?? "unknown", name: item.categoryName ?? "" },
                   })
                 }
               >
