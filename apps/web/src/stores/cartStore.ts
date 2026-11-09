@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { productUsesApparelSizes, type ProductSize } from "@/lib/productSizing";
+import { productSizesForCategory, productUsesApparelSizes, type ProductSize } from "@/lib/productSizing";
 import type { Category, Product } from "@/types/product";
 
 export interface CartItem {
@@ -23,7 +23,7 @@ type AddableProduct = Pick<Product, "id" | "name" | "price" | "currency" | "imag
 
 type PendingSizeSelection =
   | { kind: "add"; product: AddableProduct; quantity: number }
-  | { kind: "update"; cartItemId: string; productName: string };
+  | { kind: "update"; cartItemId: string; productName: string; categorySlug: string; categoryName: string };
 
 interface CartState {
   items: CartItem[];
@@ -50,10 +50,10 @@ export const useCartStore = create<CartState>()(
       pendingSizeSelection: null,
 
       addItem: (product, quantity = 1, requestedSize = null) => {
-        const hasSizes = productUsesApparelSizes(product.category.slug, product.category.name);
-        const size = hasSizes ? requestedSize : null;
+        const availableSizes = productSizesForCategory(product.category.slug, product.category.name);
+        const size = requestedSize && availableSizes.includes(requestedSize) ? requestedSize : null;
 
-        if (hasSizes && !size) {
+        if (availableSizes.length > 0 && !size) {
           set({ pendingSizeSelection: { kind: "add", product, quantity } });
           return false;
         }
@@ -98,7 +98,15 @@ export const useCartStore = create<CartState>()(
       requestCartItemSize: (id) => {
         const item = get().items.find((cartItem) => cartItem.id === id);
         if (!item || !productUsesApparelSizes(item.categorySlug, item.categoryName) || item.size) return;
-        set({ pendingSizeSelection: { kind: "update", cartItemId: item.id, productName: item.name } });
+        set({
+          pendingSizeSelection: {
+            kind: "update",
+            cartItemId: item.id,
+            productName: item.name,
+            categorySlug: item.categorySlug,
+            categoryName: item.categoryName,
+          },
+        });
       },
 
       choosePendingSize: (size) => {

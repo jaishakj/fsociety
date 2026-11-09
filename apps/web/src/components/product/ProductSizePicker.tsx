@@ -1,16 +1,17 @@
-import { APPAREL_SIZES, type ProductSize } from "@/lib/productSizing";
+import type { ProductSize } from "@/lib/productSizing";
 
 interface ProductSizePickerProps {
+  sizes: readonly ProductSize[];
   value: ProductSize | null;
   onChange: (size: ProductSize) => void;
 }
 
-export function ProductSizePicker({ value, onChange }: ProductSizePickerProps) {
+export function ProductSizePicker({ sizes, value, onChange }: ProductSizePickerProps) {
   return (
     <div>
       <p className="mb-3 text-sm text-[var(--color-steel)]">Choose a size</p>
       <div role="group" aria-label="Available sizes" className="flex flex-wrap gap-2">
-        {APPAREL_SIZES.map((size) => (
+        {sizes.map((size) => (
           <button
             key={size}
             type="button"

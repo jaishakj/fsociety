@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { StateMessage } from "@/components/ui/StateMessage";
 import { useProduct, useRelatedProducts } from "@/hooks/useProducts";
-import { productUsesApparelSizes, type ProductSize } from "@/lib/productSizing";
+import { productSizesForCategory, type ProductSize } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { ProductSizePicker } from "@/components/product/ProductSizePicker";
@@ -62,7 +62,7 @@ export default function ProductPage() {
   const activeImage = product.images[selectedIndex] ?? product.images[0];
   const outOfStock = product.stock <= 0;
   const lowStock = !outOfStock && product.stock <= LOW_STOCK_THRESHOLD;
-  const hasSizes = productUsesApparelSizes(product.category.slug, product.category.name);
+  const availableSizes = productSizesForCategory(product.category.slug, product.category.name);
 
   const handleAddToBag = () => {
     setAdded(addItem(product, quantity, selectedSize));
@@ -96,9 +96,9 @@ export default function ProductPage() {
         specs={[{ label: "Price", value: `${product.currency} ${product.price}` }]}
       />
 
-      {hasSizes ? (
+      {availableSizes.length > 0 ? (
         <div className="relative z-10 mt-8 rounded-2xl border border-white/10 bg-[var(--color-panel)] p-5 sm:p-6">
-          <ProductSizePicker value={selectedSize} onChange={setSelectedSize} />
+          <ProductSizePicker sizes={availableSizes} value={selectedSize} onChange={setSelectedSize} />
         </div>
       ) : null}
 

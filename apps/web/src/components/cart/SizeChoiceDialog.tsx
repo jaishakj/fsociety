@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 
-import { APPAREL_SIZES } from "@/lib/productSizing";
+import { productSizesForCategory } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
 import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
 
@@ -11,6 +11,12 @@ export function SizeChoiceDialog() {
   const close = useCartStore((state) => state.closeSizePrompt);
   const reduceMotion = useReducedMotion();
   const dialogRef = useDialogFocusRestore<HTMLElement>(Boolean(pending));
+  const sizes = pending
+    ? productSizesForCategory(
+        pending.kind === "add" ? pending.product.category.slug : pending.categorySlug,
+        pending.kind === "add" ? pending.product.category.name : pending.categoryName,
+      )
+    : [];
 
   return (
     <AnimatePresence>
@@ -64,8 +70,12 @@ export function SizeChoiceDialog() {
               </button>
             </div>
 
-            <div role="group" aria-label="Choose a clothing size" className="mt-7 grid grid-cols-5 gap-2">
-              {APPAREL_SIZES.map((size) => (
+            <div
+              role="group"
+              aria-label="Choose a clothing size"
+              className={`mt-7 grid gap-2 ${sizes.length > 5 ? "grid-cols-6" : "grid-cols-5"}`}
+            >
+              {sizes.map((size) => (
                 <button
                   key={size}
                   type="button"
