@@ -4,6 +4,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CustomCursor } from "@/components/cursor/CustomCursor";
 import { Footer } from "@/components/layout/Footer";
 import { IntroShowreel } from "@/components/layout/IntroShowreel";
+import { SizeChoiceDialog } from "@/components/cart/SizeChoiceDialog";
 import { NavBar } from "@/components/layout/NavBar";
 import { SearchModal } from "@/components/search/SearchModal";
 import { FallingLeavesField } from "@/components/ui/FallingLeavesField";
@@ -17,6 +18,7 @@ export function Shell() {
       <FireflyField />
       <CustomCursor />
       <CartDrawer />
+      <SizeChoiceDialog />
       <SearchModal />
       <NavBar />
       <main className="relative z-[1] mx-auto max-w-6xl">

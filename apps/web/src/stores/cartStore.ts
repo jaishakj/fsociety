@@ -1,23 +1,38 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { Product } from "@/types/product";
+import { productSizesForCategory, productUsesApparelSizes, type ProductSize } from "@/lib/productSizing";
+import type { Category, Product } from "@/types/product";
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: string;
   currency: string;
   image: string | null;
   quantity: number;
+  categorySlug: string;
+  categoryName: string;
+  size: ProductSize | null;
 }
 
-type AddableProduct = Pick<Product, "id" | "name" | "price" | "currency" | "images">
+type AddableProduct = Pick<Product, "id" | "name" | "price" | "currency" | "images"> & {
+  category: Pick<Category, "slug" | "name">;
+};
+
+type PendingSizeSelection =
+  | { kind: "add"; product: AddableProduct; quantity: number }
+  | { kind: "update"; cartItemId: string; productName: string; categorySlug: string; categoryName: string };
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
-  addItem: (product: AddableProduct, quantity?: number) => void;
+  pendingSizeSelection: PendingSizeSelection | null;
+  addItem: (product: AddableProduct, quantity?: number, size?: ProductSize | null) => boolean;
+  requestCartItemSize: (id: string) => void;
+  choosePendingSize: (size: ProductSize) => void;
+  closeSizePrompt: () => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   open: () => void;
@@ -32,15 +47,27 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      pendingSizeSelection: null,
 
-      addItem: (product, quantity = 1) =>
+      addItem: (product, quantity = 1, requestedSize = null) => {
+        const availableSizes = productSizesForCategory(product.category.slug, product.category.name);
+        const size = requestedSize && availableSizes.includes(requestedSize) ? requestedSize : null;
+
+        if (availableSizes.length > 0 && !size) {
+          set({ pendingSizeSelection: { kind: "add", product, quantity } });
+          return false;
+        }
+
+        const productId = product.id;
+        const lineId = size ? `${productId}:${size}` : productId;
+
         set((state) => {
-          const existing = state.items.find((item) => item.id === product.id);
+          const existing = state.items.find((item) => item.id === lineId);
 
           if (existing) {
             return {
               items: state.items.map((item) =>
-                item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
+                item.id === lineId ? { ...item, quantity: item.quantity + quantity } : item,
               ),
               isOpen: true,
             };
@@ -50,17 +77,106 @@ export const useCartStore = create<CartState>()(
             items: [
               ...state.items,
               {
-                id: product.id,
+                id: lineId,
+                productId,
                 name: product.name,
                 price: product.price,
                 currency: product.currency,
                 image: product.images[0]?.url ?? null,
                 quantity,
+                categorySlug: product.category.slug,
+                categoryName: product.category.name,
+                size,
               },
             ],
             isOpen: true,
           };
-        }),
+        });
+        return true;
+      },
+
+      requestCartItemSize: (id) => {
+        const item = get().items.find((cartItem) => cartItem.id === id);
+        if (!item || !productUsesApparelSizes(item.categorySlug, item.categoryName) || item.size) return;
+        set({
+          pendingSizeSelection: {
+            kind: "update",
+            cartItemId: item.id,
+            productName: item.name,
+            categorySlug: item.categorySlug,
+            categoryName: item.categoryName,
+          },
+        });
+      },
+
+      choosePendingSize: (size) => {
+        const pending = get().pendingSizeSelection;
+        if (!pending) return;
+
+        if (pending.kind === "add") {
+          const product = pending.product;
+          const lineId = `${product.id}:${size}`;
+          set((state) => {
+            const existing = state.items.find((item) => item.id === lineId);
+
+            if (existing) {
+              return {
+                items: state.items.map((item) =>
+                  item.id === lineId ? { ...item, quantity: item.quantity + pending.quantity } : item,
+                ),
+                pendingSizeSelection: null,
+                isOpen: true,
+              };
+            }
+
+            return {
+              items: [
+                ...state.items,
+                {
+                  id: lineId,
+                  productId: product.id,
+                  name: product.name,
+                  price: product.price,
+                  currency: product.currency,
+                  image: product.images[0]?.url ?? null,
+                  quantity: pending.quantity,
+                  categorySlug: product.category.slug,
+                  categoryName: product.category.name,
+                  size,
+                },
+              ],
+              pendingSizeSelection: null,
+              isOpen: true,
+            };
+          });
+          return;
+        }
+
+        set((state) => {
+          const selectedItem = state.items.find((item) => item.id === pending.cartItemId);
+          if (!selectedItem) return { pendingSizeSelection: null };
+
+          const lineId = `${selectedItem.productId}:${size}`;
+          const existing = state.items.find((item) => item.id === lineId && item.id !== selectedItem.id);
+          if (existing) {
+            return {
+              items: state.items
+                .filter((item) => item.id !== selectedItem.id)
+                .map((item) => item.id === lineId ? { ...item, quantity: item.quantity + selectedItem.quantity } : item),
+              pendingSizeSelection: null,
+            };
+          }
+
+          return {
+            items: state.items.map((item) =>
+              item.id === selectedItem.id ? { ...item, id: lineId, size } : item,
+            ),
+            pendingSizeSelection: null,
+          };
+        });
+      },
+
+      closeSizePrompt: () => set({ pendingSizeSelection: null }),
 
       removeItem: (id) => set((state) => ({ items: state.items.filter((item) => item.id !== id) })),
 
@@ -81,6 +197,21 @@ export const useCartStore = create<CartState>()(
     {
       name: "fsociety-cart",
       partialize: (state) => ({ items: state.items }),
+      version: 1,
+      migrate: (persistedState) => {
+        const oldState = persistedState as { items?: Array<Partial<CartItem> & { id: string; name: string }> };
+        const items = Array.isArray(oldState.items) ? oldState.items : [];
+
+        return {
+          items: items.map((item) => ({
+            ...item,
+            productId: item.productId ?? item.id,
+            categorySlug: item.categorySlug ?? "unknown",
+            categoryName: item.categoryName ?? "",
+            size: item.size ?? null,
+          })),
+        } as CartState;
+      },
     },
   ),
 );

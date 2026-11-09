@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
+import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
 
 export function CartDrawer() {
@@ -13,7 +14,11 @@ export function CartDrawer() {
   const reduceMotion = useReducedMotion();
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
   const totalPrice = useCartStore((state) => state.totalPrice());
+  const hasMissingSizes = items.some((item) =>
+    productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
+  );
 
   const dialogRef = useDialogFocusRestore<HTMLElement>(isOpen);
 
@@ -70,6 +75,20 @@ export function CartDrawer() {
                         <p className="font-mono mt-1 text-xs text-[var(--color-signal)]">
                           {item.currency} {item.price}
                         </p>
+                        {productUsesApparelSizes(item.categorySlug, item.categoryName) ? (
+                          item.size ? (
+                            <p className="mt-1 text-xs text-[var(--color-steel)]">Size {item.size}</p>
+                          ) : (
+                            <button
+                              type="button"
+                              data-cursor
+                              onClick={() => requestCartItemSize(item.id)}
+                              className="mt-1 rounded text-left text-xs text-[var(--color-signal)] underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-signal)]"
+                            >
+                              Choose size
+                            </button>
+                          )
+                        ) : null}
                         <div className="mt-2 flex items-center gap-1">
                           <button
                             data-cursor
@@ -110,7 +129,22 @@ export function CartDrawer() {
                   <span>Subtotal</span>
                   <span>INR {totalPrice.toFixed(2)}</span>
                 </div>
-                <Link to="/checkout" data-cursor onClick={close} className="mt-4 block">
+                <Link
+                  to="/checkout"
+                  data-cursor
+                  onClick={(event) => {
+                    if (hasMissingSizes) {
+                      event.preventDefault();
+                      const firstMissing = items.find((item) =>
+                        productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
+                      );
+                      if (firstMissing) requestCartItemSize(firstMissing.id);
+                      return;
+                    }
+                    close();
+                  }}
+                  className="mt-4 block"
+                >
                   <Button variant="primary" className="w-full">
                     Checkout
                   </Button>

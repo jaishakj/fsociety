@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
 
 // ponytail: no payment gateway account/webhook exists, so there's no way to
@@ -26,7 +27,11 @@ function buildUpiLink(amount: number, note: string): string | null {
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
   const totalPrice = useCartStore((state) => state.totalPrice());
+  const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const itemMissingSize = items.find((item) =>
+    productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
+  );
 
   const upiLink = items.length > 0 ? buildUpiLink(totalPrice, `Fsociety order, ${items.length} item(s)`) : null;
 
@@ -38,12 +43,28 @@ export default function CheckoutPage() {
     QRCode.toDataURL(upiLink, { margin: 1, width: 240 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
   }, [upiLink]);
 
+  useEffect(() => {
+    if (itemMissingSize) requestCartItemSize(itemMissingSize.id);
+  }, [itemMissingSize, requestCartItemSize]);
+
   if (items.length === 0) {
     return (
       <div className="py-24 text-center">
         <p className="text-[var(--color-steel)]">Your bag is empty.</p>
         <Link to="/shop" data-cursor className="mt-4 inline-block text-[var(--color-signal)] underline">
           Back to shop
+        </Link>
+      </div>
+    );
+  }
+
+  if (itemMissingSize) {
+    return (
+      <div className="py-24 text-center">
+        <p className="font-display text-2xl text-[var(--color-paper)]">Choose your sizes first</p>
+        <p className="mt-3 text-sm text-[var(--color-steel)]">Select a size for each clothing item to continue to payment.</p>
+        <Link to="/shop" data-cursor className="mt-5 inline-block text-[var(--color-signal)] underline">
+          Continue shopping
         </Link>
       </div>
     );
@@ -76,6 +97,7 @@ export default function CheckoutPage() {
                 <div className="flex-1">
                   <p className="text-sm text-[var(--color-paper)]">{item.name}</p>
                   <p className="text-xs text-[var(--color-steel)]">Qty {item.quantity}</p>
+                  {item.size ? <p className="text-xs text-[var(--color-steel)]">Size {item.size}</p> : null}
                 </div>
                 <span className="font-mono text-sm text-[var(--color-paper)]">
                   {item.currency} {(Number(item.price) * item.quantity).toFixed(2)}
