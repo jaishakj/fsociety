@@ -14,7 +14,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@clerk/react": "^6.18.6",
     "@tanstack/react-query": "^5.56.2",
     "axios": "^1.7.7",
     "falling-leaves": "^0.1.0",

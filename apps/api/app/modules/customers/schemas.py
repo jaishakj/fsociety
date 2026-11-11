@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -16,7 +18,8 @@ class ShippingProfileOut(ShippingProfileInput):
 
 
 class AdminCustomerOut(ShippingProfileOut):
-    id: str
-    clerk_user_id: str
+    id: UUID
+    user_id: UUID | None
+    clerk_user_id: str | None
     created_at: str
     updated_at: str

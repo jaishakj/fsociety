@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -16,12 +16,13 @@ from app.modules.auth.schemas import UserRegister
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
-    return db.scalar(select(User).where(User.email == email))
+    normalized_email = email.strip().casefold()
+    return db.scalar(select(User).where(func.lower(User.email) == normalized_email))
 
 
 def register_user(db: Session, data: UserRegister, make_admin: bool = False) -> User:
     user = User(
-        email=data.email,
+        email=data.email.strip().casefold(),
         password_hash=hash_password(data.password),
         display_name=data.display_name,
     )

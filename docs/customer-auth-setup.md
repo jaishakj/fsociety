@@ -1,34 +1,20 @@
-# Customer accounts (Clerk)
+# Customer accounts
 
-Customer sign-in uses Clerk. Shipping phone numbers and addresses are stored in the API's configured PostgreSQL database (`DATABASE_URL`), linked by Clerk's stable user ID. A customer API token can only read or update the profile belonging to its verified Clerk subject. Shipping addresses are not stored in Clerk public or unsafe metadata. The customer directory endpoint also requires the existing API admin role and a matching `CUSTOMER_DATA_OWNER_EMAIL`.
+Customer accounts use the API's existing email/password authentication, Argon2 password hashing, short-lived access tokens, rotating refresh tokens, and revocable database-backed sessions. Customer registration creates a standard `user` role; it does not grant administrator access.
 
-## Clerk Dashboard
+Shipping phone and address live in `customer_profiles`, linked to the account UUID. Each signed-in customer can read or change only their own profile. The customer directory remains restricted to API administrators and the configured `CUSTOMER_DATA_OWNER_EMAIL`.
 
-1. Create or select the Clerk application for FSOCIETY.
-2. In **User & authentication**, enable email sign-up and email verification. For a free production setup, use email verification codes as the account verification method. Email is the sign-in identifier; users provide their mobile number as a shipping contact after sign-up. Clerk phone/SMS authentication requires a paid production plan.
-3. Do not make phone number a required authentication identifier. The app collects it with the shipping address after the verified email sign-up.
-4. Add the deployed storefront origin and local development origin to Clerk's allowed origins / authorized parties.
-5. Obtain the application's publishable key and the instance's Frontend API issuer URL / JWKS URL from Clerk.
+## Vercel configuration
 
-## Deployment settings
+The web app uses `VITE_API_URL` when configured and otherwise defaults to the production API URL. Set the web Preview value to the API Preview URL for branch deployments. The API requires:
 
-Set these in the deployment environments (never commit keys into source):
+- `DATABASE_URL` — the database connection for that deployment environment.
+- `JWT_SECRET_KEY` — an existing strong, random secret, at least 32 bytes.
+- `FRONTEND_URL` — the exact storefront origin allowed by API CORS.
+- `CUSTOMER_DATA_OWNER_EMAIL` — the administrator email allowed to access the customer directory.
 
-**Web app**
+Do not copy Preview values into Production. Apply Alembic migrations through `0006` to the database before enabling account signup in a deployment.
 
-- `VITE_CLERK_PUBLISHABLE_KEY` — Clerk publishable key, set on the Vercel project serving `apps/web` for Preview and Production.
-- The frontend requires Node.js 20.9.0 or newer (declared in `apps/web/package.json`).
+## Account recovery
 
-**API**
-
-- `CLERK_ISSUER` — exact HTTPS issuer URL from the Clerk instance's default session token.
-- `CLERK_JWKS_URL` — that instance's `/.well-known/jwks.json` URL.
-- `CLERK_AUTHORIZED_PARTIES` — comma-separated storefront origins, e.g. local development and the production storefront origin.
-- `CUSTOMER_DATA_OWNER_EMAIL` — email address on the existing local API admin account that alone can read the customer directory.
-- Keep the API's existing `DATABASE_URL` pointed at the intended PostgreSQL/Neon database and keep the production `JWT_SECRET_KEY` configured for the existing admin login.
-
-## Database rollout
-
-Apply the new Alembic migration (`0005_customer_profiles`) to the target database as part of the API release. It adds a private `customer_profiles` table; it does not alter existing account rows or change the legacy admin login. Do not enable sign-up publicly until Clerk keys are set and the migration has completed.
-
-The account page supports editing saved delivery details. Requests to access or delete a customer's details should be verified and handled by the store owner through the authorized customer directory / database process. The store currently does not save completed orders or verify UPI payments.
+The app currently supports registration, sign-in, sign-out, and session refresh. It does not send email verification or password reset messages. Customers who lose access to a password need the store operator to provide a recovery process before public launch.

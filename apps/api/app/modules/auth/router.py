@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import CurrentUser, DbSession, oauth2_scheme
 from app.core.rate_limit import limiter
@@ -32,8 +33,12 @@ router = APIRouter()
 @limiter.limit("3/minute")
 def register(request: Request, data: UserRegister, db: DbSession):
     if get_user_by_email(db, data.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-    user = register_user(db, data)
+        raise HTTPException(status_code=409, detail="An account already exists for this email")
+    try:
+        user = register_user(db, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="An account already exists for this email") from None
     return user_to_out_dict(user)
 
 

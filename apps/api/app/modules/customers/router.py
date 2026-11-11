@@ -3,9 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 
-from app.api.deps import AdminUser, DbSession
+from app.api.deps import AdminUser, CurrentUser, DbSession
 from app.core.config import settings
-from app.modules.customers.auth import ClerkClaims
 from app.modules.customers.models import CustomerProfile
 from app.modules.customers.schemas import AdminCustomerOut, ShippingProfileInput, ShippingProfileOut
 
@@ -13,9 +12,9 @@ router = APIRouter()
 
 
 @router.get("/profile", response_model=ShippingProfileOut)
-def get_profile(db: DbSession, claims: ClerkClaims):
+def get_profile(db: DbSession, current_user: CurrentUser):
     profile = db.scalar(
-        select(CustomerProfile).where(CustomerProfile.clerk_user_id == claims["sub"])
+        select(CustomerProfile).where(CustomerProfile.user_id == current_user.id)
     )
     if profile is None:
         raise HTTPException(status_code=404, detail="Shipping profile not found")
@@ -23,12 +22,12 @@ def get_profile(db: DbSession, claims: ClerkClaims):
 
 
 @router.put("/profile", response_model=ShippingProfileOut)
-def save_profile(data: ShippingProfileInput, db: DbSession, claims: ClerkClaims):
+def save_profile(data: ShippingProfileInput, db: DbSession, current_user: CurrentUser):
     profile = db.scalar(
-        select(CustomerProfile).where(CustomerProfile.clerk_user_id == claims["sub"])
+        select(CustomerProfile).where(CustomerProfile.user_id == current_user.id)
     )
     if profile is None:
-        profile = CustomerProfile(clerk_user_id=claims["sub"], **data.model_dump())
+        profile = CustomerProfile(user_id=current_user.id, **data.model_dump())
         db.add(profile)
     else:
         for key, value in data.model_dump().items():

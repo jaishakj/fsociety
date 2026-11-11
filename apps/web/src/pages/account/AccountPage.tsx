@@ -40,7 +40,7 @@ export default function AccountPage() {
           <Link to="/account/setup" className="text-sm text-[var(--color-paper)] underline underline-offset-4">Edit details</Link>
         </div>
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-          <div><dt className="text-[var(--color-steel)]">Account email</dt><dd className="mt-1 text-[var(--color-paper)]">{auth.email ?? "Verified with Clerk"}</dd></div>
+          <div><dt className="text-[var(--color-steel)]">Account email</dt><dd className="mt-1 text-[var(--color-paper)]">{auth.email ?? "Signed in"}</dd></div>
           <div><dt className="text-[var(--color-steel)]">Mobile</dt><dd className="mt-1 text-[var(--color-paper)]">{profile.phone_number}</dd></div>
           <div className="sm:col-span-2"><dt className="text-[var(--color-steel)]">Delivery address</dt><dd className="mt-1 leading-6 text-[var(--color-paper)]">{[profile.address_line_1, profile.address_line_2, profile.city, profile.state_or_region, profile.postal_code, profile.country].filter(Boolean).join(", ")}</dd></div>
         </dl>
