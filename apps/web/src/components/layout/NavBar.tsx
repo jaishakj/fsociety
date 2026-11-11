@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Heart, Instagram, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Heart, Instagram, Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 
@@ -7,6 +7,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useSearchStore } from "@/stores/searchStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
+import { useCustomerAuth } from "@/auth/customerAuth";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
@@ -21,6 +22,7 @@ export function NavBar() {
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const openSearch = useSearchStore((state) => state.open);
   const reduceMotion = useReducedMotion();
+  const customerAuth = useCustomerAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const dialogRef = useDialogFocusRestore<HTMLDivElement>(mobileOpen);
@@ -76,6 +78,15 @@ export function NavBar() {
               </span>
             ) : null}
           </button>
+          <Link
+            to={customerAuth.isSignedIn ? "/account" : "/sign-in"}
+            data-cursor
+            aria-label={customerAuth.isSignedIn ? "Your account" : "Sign in or create an account"}
+            title={customerAuth.isSignedIn ? "Your account" : "Sign in"}
+            className="flex min-h-12 min-w-12 items-center justify-center rounded-full hover:bg-white/5"
+          >
+            <UserRound size={18} />
+          </Link>
           <a
             href="https://instagram.com"
             data-cursor
@@ -140,6 +151,14 @@ export function NavBar() {
                     {link.label}
                   </NavLink>
                 ))}
+                <NavLink
+                  to={customerAuth.isSignedIn ? "/account" : "/sign-in"}
+                  data-cursor
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `flex min-h-12 items-center font-display text-2xl transition-colors ${isActive ? "text-[var(--color-signal)]" : "text-[var(--color-paper)]"}`}
+                >
+                  {customerAuth.isSignedIn ? "Account" : "Sign in"}
+                </NavLink>
               </nav>
             </motion.div>
           </>
