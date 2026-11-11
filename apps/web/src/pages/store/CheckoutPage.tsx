@@ -1,7 +1,9 @@
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
+import { useCustomerAuth } from "@/auth/customerAuth";
+import { getShippingProfile } from "@/auth/shippingProfile";
 import { Button } from "@/components/ui/Button";
 import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
@@ -28,6 +30,10 @@ export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
   const totalPrice = useCartStore((state) => state.totalPrice());
   const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
+  const customerAuth = useCustomerAuth();
+  const [shippingReady, setShippingReady] = useState(false);
+  const [shippingError, setShippingError] = useState(false);
+  const [shippingMissing, setShippingMissing] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const itemMissingSize = items.find((item) =>
     productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
@@ -46,6 +52,32 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (itemMissingSize) requestCartItemSize(itemMissingSize.id);
   }, [itemMissingSize, requestCartItemSize]);
+
+  useEffect(() => {
+    let active = true;
+    if (!customerAuth.configured || !customerAuth.isLoaded || !customerAuth.isSignedIn || items.length === 0) {
+      setShippingReady(false);
+      setShippingError(false);
+      setShippingMissing(false);
+      return () => { active = false; };
+    }
+    setShippingError(false);
+    setShippingMissing(false);
+    customerAuth.getToken().then(async (token) => {
+      if (!token) throw new Error("Missing customer session");
+      await getShippingProfile(token);
+      if (active) setShippingReady(true);
+    }).catch((error: unknown) => {
+      if (!active) return;
+      const status = typeof error === "object" && error !== null && "response" in error
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined;
+      setShippingError(status !== 404);
+      setShippingMissing(status === 404);
+      setShippingReady(false);
+    });
+    return () => { active = false; };
+  }, [customerAuth, items.length]);
 
   if (items.length === 0) {
     return (
@@ -68,6 +100,21 @@ export default function CheckoutPage() {
         </Link>
       </div>
     );
+  }
+
+  if (customerAuth.configured) {
+    if (!customerAuth.isLoaded) return <p className="py-24 text-center text-sm text-[var(--color-steel)]">Checking your account…</p>;
+    if (!customerAuth.isSignedIn) return (
+      <section className="mx-auto max-w-xl py-24 text-center">
+        <h1 className="font-display text-3xl text-[var(--color-paper)]">Sign in to continue</h1>
+        <p className="mt-3 text-sm text-[var(--color-steel)]">Your shipping details are saved securely to your account.</p>
+        <Link to="/sign-in" onClick={() => window.sessionStorage.setItem("fsociety.checkout-after-signin", "1")} className="mt-6 inline-flex min-h-12 items-center rounded-full bg-[var(--color-signal)] px-6 text-sm font-medium text-[var(--color-void)]">Sign in</Link>
+        <p className="mt-4 text-sm text-[var(--color-steel)]">New here? <Link to="/sign-up" className="text-[var(--color-paper)] underline">Create an account</Link></p>
+      </section>
+    );
+    if (shippingError) return <section className="mx-auto max-w-xl py-24 text-center"><h1 className="font-display text-3xl text-[var(--color-paper)]">Couldn’t verify delivery details</h1><p className="mt-3 text-sm text-[var(--color-steel)]">Please refresh or sign in again before checkout.</p><Link to="/account" className="mt-6 inline-flex min-h-12 items-center rounded-full border border-white/15 px-6 text-sm text-[var(--color-paper)]">Go to account</Link></section>;
+    if (shippingMissing) return <Navigate to="/account/setup" replace />;
+    if (!shippingReady) return <p className="py-24 text-center text-sm text-[var(--color-steel)]">Checking your shipping details…</p>;
   }
 
   return (

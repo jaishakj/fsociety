@@ -4,7 +4,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 const sections = [
   { title: "Introduction and acceptance", content: <LegalParagraph>These draft terms describe use of the FSOCIETY storefront. The operator's legal name and business details must be completed before publication. By using the website, you agree to follow applicable law and these terms, subject to any rights that cannot legally be limited.</LegalParagraph> },
   { title: "Eligibility", content: <LegalParagraph>You may use the website only where permitted by applicable law. If you are not legally able to enter an agreement, use the website with the involvement of a parent or guardian where required.</LegalParagraph> },
-  { title: "Accounts and responsibility", content: <LegalParagraph>The current storefront does not offer customer account registration or sign-in. If account features are added, account responsibilities and these terms must be updated before those features are offered.</LegalParagraph> },
+  { title: "Accounts and responsibility", content: <LegalParagraph>Customers may register and sign in through Clerk using the methods enabled in the store’s account settings. Keep access to your email account secure and provide accurate contact and shipping details. The store may use the phone number and address on your account to support delivery after an order process is available. Account creation does not itself place or confirm an order.</LegalParagraph> },
   { title: "Products and availability", content: <LegalParagraph>The catalogue is supplied by the store's product API and may change. Product availability is not guaranteed until the operator confirms an order through a supported order process. The current storefront does not create or confirm orders.</LegalParagraph> },
   { title: "Pricing and taxes", content: <LegalParagraph>Prices are displayed as returned by the catalogue. The site does not currently show a configured tax or shipping calculation. Confirm tax treatment and any additional charges with the operator before completing a purchase.</LegalParagraph> },
   { title: "Orders and acceptance", content: <LegalParagraph>The current frontend has no order submission or acceptance workflow. Adding an item to the cart or opening a payment app does not create an order or mean the operator has accepted one. The operator must publish the actual order confirmation process when it is implemented.</LegalParagraph> },
@@ -25,5 +25,5 @@ const sections = [
 
 export default function TermsOfServicePage() {
   usePageMeta("Terms of Service | FSOCIETY", "Review the terms for using the FSOCIETY storefront and its current checkout flow.", "/terms-of-service");
-  return <LegalLayout title="Terms of Service" updated="5 November 2026" sections={sections} />;
+  return <LegalLayout title="Terms of Service" updated="9 November 2026" sections={sections} />;
 }

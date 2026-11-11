@@ -21,6 +21,13 @@ class Settings(BaseSettings):
 
     frontend_url: str = "http://localhost:5173"
 
+    # Clerk verifies customer identity; these public verification settings are
+    # deliberately separate from the legacy JWT used by the admin interface.
+    clerk_jwks_url: str | None = None
+    clerk_issuer: str | None = None
+    clerk_authorized_parties: str = ""
+    customer_data_owner_email: str | None = None
+
     upload_dir: str = str(Path(gettempdir()) / "fsociety" / "uploads")
     max_upload_size_mb: int = 4
     blob_store_id: str | None = None

@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.products import models as product_models  # noqa: F401
+from app.modules.customers import models as customer_models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

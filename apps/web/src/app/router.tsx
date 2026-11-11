@@ -15,6 +15,10 @@ import ShopPage from "@/pages/store/ShopPage";
 import PrivacyPolicyPage from "@/pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/legal/TermsOfServicePage";
 import { legalRoutes } from "@/app/legalRoutes";
+import SignUpPage from "@/pages/account/SignUpPage";
+import SignInPage from "@/pages/account/SignInPage";
+import AccountPage from "@/pages/account/AccountPage";
+import ShippingProfilePage from "@/pages/account/ShippingProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +28,10 @@ export const router = createBrowserRouter([
       { path: "/shop", element: <ShopPage /> },
       { path: "/product/:slug", element: <ProductPage /> },
       { path: "/checkout", element: <CheckoutPage /> },
+      { path: "/sign-up/*", element: <SignUpPage /> },
+      { path: "/sign-in/*", element: <SignInPage /> },
+      { path: "/account", element: <AccountPage /> },
+      { path: "/account/setup", element: <ShippingProfilePage /> },
       { path: "/wishlist", element: <WishlistPage /> },
       { path: legalRoutes.privacy, element: <PrivacyPolicyPage /> },
       { path: legalRoutes.terms, element: <TermsOfServicePage /> },
