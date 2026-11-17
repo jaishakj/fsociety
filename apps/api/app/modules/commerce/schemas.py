@@ -47,6 +47,8 @@ class CustomerCartItemOut(BaseModel):
     product_id: UUID
     name: str
     slug: str
+    category_slug: str
+    category_name: str
     quantity: int
     size: ProductSize | None
     unit_price: Decimal

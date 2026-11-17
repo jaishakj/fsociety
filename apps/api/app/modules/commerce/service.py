@@ -44,6 +44,8 @@ def _cart_item_out(item: CustomerCartItem, *, is_available: bool) -> CustomerCar
         product_id=product.id,
         name=product.name,
         slug=product.slug,
+        category_slug=product.category.slug,
+        category_name=product.category.name,
         quantity=item.quantity,
         size=item.size or None,
         unit_price=Decimal(product.price),

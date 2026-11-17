@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 
 import { useCustomerAuth } from "@/auth/customerAuth";
+import { useCartSyncStatus } from "@/auth/CartSync";
 import { getShippingProfile } from "@/auth/shippingProfile";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/lib/api";
@@ -14,6 +15,7 @@ export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
   const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
   const customerAuth = useCustomerAuth();
+  const cartSync = useCartSyncStatus();
   const [shippingReady, setShippingReady] = useState(false);
   const [shippingError, setShippingError] = useState(false);
   const [shippingMissing, setShippingMissing] = useState(false);
@@ -38,6 +40,7 @@ export default function CheckoutPage() {
     enabled:
       items.length > 0 &&
       !itemMissingSize &&
+      cartSync.ready &&
       (!customerAuth.configured || (customerAuth.isLoaded && customerAuth.isSignedIn && shippingReady)),
     retry: 1,
   });
@@ -122,12 +125,22 @@ export default function CheckoutPage() {
       />
 
       <h1 className="relative z-10 font-display text-4xl text-[var(--color-paper)]">Checkout</h1>
+      {cartSync.error ? (
+        <div className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-signal)]/30 p-4">
+          <p role="status" className="text-sm text-[var(--color-steel)]">{cartSync.error}</p>
+          <Button type="button" variant="outline" onClick={cartSync.retry}>
+            Retry bag sync
+          </Button>
+        </div>
+      ) : null}
 
       <div className="relative z-10 mt-10 grid grid-cols-1 gap-10 md:grid-cols-[1.2fr_1fr]">
         <section className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6">
           <h2 className="font-display text-lg text-[var(--color-paper)]">Order summary</h2>
           <ul className="mt-6 space-y-4">
-            {items.map((item, index) => {
+            {!cartSync.ready ? (
+              <li className="text-sm text-[var(--color-steel)]">Loading your saved bag&hellip;</li>
+            ) : items.map((item, index) => {
               const quotedItem = quoteQuery.data?.items[index];
               return (
                 <li key={item.id} className="flex items-center gap-4">
@@ -152,7 +165,11 @@ export default function CheckoutPage() {
               );
             })}
           </ul>
-          {quoteQuery.data ? (
+          {!cartSync.ready ? (
+            <p className="mt-6 border-t border-white/10 pt-4 text-sm text-[var(--color-steel)]">
+              Verifying your saved bag&hellip;
+            </p>
+          ) : quoteQuery.data ? (
             <div role="status" className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
               <span className="text-[var(--color-paper)]">Merchandise subtotal</span>
               <span className="font-mono text-lg text-[var(--color-signal)]">

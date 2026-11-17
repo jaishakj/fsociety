@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
 import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
+import { useCartSyncStatus } from "@/auth/CartSync";
 
 export function CartDrawer() {
   const items = useCartStore((state) => state.items);
@@ -16,6 +17,7 @@ export function CartDrawer() {
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
   const totalPrice = useCartStore((state) => state.totalPrice());
+  const cartSync = useCartSyncStatus();
   const hasMissingSizes = items.some((item) =>
     productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
   );
@@ -59,7 +61,9 @@ export function CartDrawer() {
             </div>
 
             <div className="mt-6 flex-1">
-              {items.length === 0 ? (
+              {!cartSync.ready ? (
+                <p role="status" className="text-sm text-[var(--color-steel)]">Loading your saved bag&hellip;</p>
+              ) : items.length === 0 ? (
                 <p className="text-sm text-[var(--color-steel)]">Your bag is empty.</p>
               ) : (
                 <ul className="space-y-4">
@@ -123,10 +127,19 @@ export function CartDrawer() {
               )}
             </div>
 
-            {items.length > 0 ? (
+            {cartSync.error ? (
+              <div className="mt-4 rounded-xl border border-[var(--color-signal)]/30 p-3">
+                <p role="status" className="text-xs leading-5 text-[var(--color-steel)]">{cartSync.error}</p>
+                <Button type="button" variant="outline" className="mt-3 w-full" onClick={cartSync.retry}>
+                  Retry bag sync
+                </Button>
+              </div>
+            ) : null}
+
+            {cartSync.ready && items.length > 0 ? (
               <div className="mt-6 border-t border-white/10 pt-4">
                 <div className="flex items-center justify-between text-sm text-[var(--color-paper)]">
-                  <span>Subtotal</span>
+                  <span>Estimated subtotal</span>
                   <span>INR {totalPrice.toFixed(2)}</span>
                 </div>
                 <Link

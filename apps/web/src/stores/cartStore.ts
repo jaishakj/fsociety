@@ -27,6 +27,7 @@ type PendingSizeSelection =
 
 interface CartState {
   items: CartItem[];
+  replaceItems: (items: CartItem[]) => void;
   isOpen: boolean;
   pendingSizeSelection: PendingSizeSelection | null;
   addItem: (product: AddableProduct, quantity?: number, size?: ProductSize | null) => boolean;
@@ -46,6 +47,7 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      replaceItems: (items) => set({ items, pendingSizeSelection: null }),
       isOpen: false,
       pendingSizeSelection: null,
 
