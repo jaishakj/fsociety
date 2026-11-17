@@ -1,30 +1,10 @@
-import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 
 import { useCustomerAuth } from "@/auth/customerAuth";
 import { getShippingProfile } from "@/auth/shippingProfile";
-import { Button } from "@/components/ui/Button";
 import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
-
-// ponytail: no payment gateway account/webhook exists, so there's no way to
-// confirm a UPI payment actually landed. This page hands off to the buyer's
-// UPI app and trusts them; upgrade path is a real gateway (Razorpay/Cashfree)
-// with server-side webhook verification once real orders need confirming.
-function buildUpiLink(amount: number, note: string): string | null {
-  const vpa = import.meta.env.VITE_UPI_VPA;
-  if (!vpa) return null;
-
-  const params = new URLSearchParams({
-    pa: vpa,
-    pn: import.meta.env.VITE_UPI_PAYEE_NAME || "Fsociety",
-    am: amount.toFixed(2),
-    cu: "INR",
-    tn: note,
-  });
-  return `upi://pay?${params.toString()}`;
-}
 
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
@@ -34,20 +14,9 @@ export default function CheckoutPage() {
   const [shippingReady, setShippingReady] = useState(false);
   const [shippingError, setShippingError] = useState(false);
   const [shippingMissing, setShippingMissing] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const itemMissingSize = items.find((item) =>
     productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
   );
-
-  const upiLink = items.length > 0 ? buildUpiLink(totalPrice, `Fsociety order, ${items.length} item(s)`) : null;
-
-  useEffect(() => {
-    if (!upiLink) {
-      setQrDataUrl(null);
-      return;
-    }
-    QRCode.toDataURL(upiLink, { margin: 1, width: 240 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
-  }, [upiLink]);
 
   useEffect(() => {
     if (itemMissingSize) requestCartItemSize(itemMissingSize.id);
@@ -153,50 +122,24 @@ export default function CheckoutPage() {
             ))}
           </ul>
           <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-            <span className="text-[var(--color-paper)]">Total</span>
+            <span className="text-[var(--color-paper)]">Estimated cart total</span>
             <span className="font-mono text-lg text-[var(--color-signal)]">
               {items[0].currency} {totalPrice.toFixed(2)}
             </span>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6 text-center">
-          <h2 className="font-display text-lg text-[var(--color-paper)]">Pay with UPI</h2>
-
-          {upiLink ? (
-            <>
-              <p className="font-mono mt-2 text-3xl text-[var(--color-paper)]">
-                &#8377;{totalPrice.toFixed(2)}
-              </p>
-
-              {qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt="Scan to pay with UPI"
-                  className="mx-auto mt-6 h-[240px] w-[240px] rounded-2xl border border-white/10 bg-white p-3"
-                />
-              ) : (
-                <div className="mx-auto mt-6 h-[240px] w-[240px] animate-pulse rounded-2xl bg-black/30" />
-              )}
-
-              <p className="mt-4 text-sm text-[var(--color-steel)]">
-                Scan with any UPI app
-              </p>
-
-              <a href={upiLink} data-cursor className="mt-6 block">
-                <Button variant="primary" className="w-full">
-                  Open in UPI app
-                </Button>
-              </a>
-              <p className="mt-3 text-xs text-[var(--color-steel)]">
-                On desktop, scan the code instead, opening this link needs a UPI app on the same device.
-              </p>
-            </>
-          ) : (
-            <p className="mt-6 text-sm text-[var(--color-steel)]">
-              Payment isn&apos;t configured yet. Please contact the store to complete this order.
-            </p>
-          )}
+        <section aria-labelledby="checkout-payment-heading" className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6 text-center">
+          <h2 id="checkout-payment-heading" className="font-display text-lg text-[var(--color-paper)]">
+            Payment unavailable
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-[var(--color-steel)]">
+            Secure online payment is not configured yet. No order has been placed and no payment has been taken.
+            Your bag is saved so you can come back later.
+          </p>
+          <Link to="/shop" data-cursor className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 text-sm text-[var(--color-paper)] transition-colors hover:bg-white/5">
+            Continue shopping
+          </Link>
         </section>
       </div>
     </div>
