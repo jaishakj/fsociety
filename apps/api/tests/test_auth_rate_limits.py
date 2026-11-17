@@ -26,7 +26,7 @@ def test_registration_limits_requests_by_client_ip(monkeypatch) -> None:
     }
 
     for _ in range(3):
-        assert client.post("/api/v1/auth/register", json=payload).status_code == 400
+        assert client.post("/api/v1/auth/register", json=payload).status_code == 409
 
     limited = client.post("/api/v1/auth/register", json=payload)
     assert limited.status_code == 429
