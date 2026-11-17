@@ -1,22 +1,46 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 
 import { useCustomerAuth } from "@/auth/customerAuth";
 import { getShippingProfile } from "@/auth/shippingProfile";
+import { Button } from "@/components/ui/Button";
+import { api } from "@/lib/api";
 import { productUsesApparelSizes } from "@/lib/productSizing";
 import { useCartStore } from "@/stores/cartStore";
+import type { CartMerchandiseQuote } from "@/types/commerce";
 
 export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
-  const totalPrice = useCartStore((state) => state.totalPrice());
   const requestCartItemSize = useCartStore((state) => state.requestCartItemSize);
   const customerAuth = useCustomerAuth();
   const [shippingReady, setShippingReady] = useState(false);
   const [shippingError, setShippingError] = useState(false);
   const [shippingMissing, setShippingMissing] = useState(false);
+  const quoteItems = items.map((item) => ({ product_id: item.productId, quantity: item.quantity }));
   const itemMissingSize = items.find((item) =>
     productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
   );
+  const quoteQuery = useQuery({
+    queryKey: ["cart-merchandise-quote", quoteItems],
+    queryFn: async () => {
+      const { data } = await api.post<CartMerchandiseQuote>("/cart/merchandise-quote", { items: quoteItems });
+      if (
+        data.items.length !== quoteItems.length ||
+        data.items.some((line, index) =>
+          line.product_id !== quoteItems[index].product_id || line.quantity !== quoteItems[index].quantity,
+        )
+      ) {
+        throw new Error("The price response did not match the saved bag");
+      }
+      return data;
+    },
+    enabled:
+      items.length > 0 &&
+      !itemMissingSize &&
+      (!customerAuth.configured || (customerAuth.isLoaded && customerAuth.isSignedIn && shippingReady)),
+    retry: 1,
+  });
 
   useEffect(() => {
     if (itemMissingSize) requestCartItemSize(itemMissingSize.id);
@@ -103,30 +127,57 @@ export default function CheckoutPage() {
         <section className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6">
           <h2 className="font-display text-lg text-[var(--color-paper)]">Order summary</h2>
           <ul className="mt-6 space-y-4">
-            {items.map((item) => (
-              <li key={item.id} className="flex items-center gap-4">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="h-16 w-14 rounded-lg object-cover" />
-                ) : (
-                  <div className="h-16 w-14 rounded-lg bg-black/40" />
-                )}
-                <div className="flex-1">
-                  <p className="text-sm text-[var(--color-paper)]">{item.name}</p>
-                  <p className="text-xs text-[var(--color-steel)]">Qty {item.quantity}</p>
-                  {item.size ? <p className="text-xs text-[var(--color-steel)]">Size {item.size}</p> : null}
-                </div>
-                <span className="font-mono text-sm text-[var(--color-paper)]">
-                  {item.currency} {(Number(item.price) * item.quantity).toFixed(2)}
-                </span>
-              </li>
-            ))}
+            {items.map((item, index) => {
+              const quotedItem = quoteQuery.data?.items[index];
+              return (
+                <li key={item.id} className="flex items-center gap-4">
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="h-16 w-14 rounded-lg object-cover" />
+                  ) : (
+                    <div className="h-16 w-14 rounded-lg bg-black/40" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm text-[var(--color-paper)]">{quotedItem?.name ?? item.name}</p>
+                    <p className="text-xs text-[var(--color-steel)]">Qty {item.quantity}</p>
+                    {item.size ? <p className="text-xs text-[var(--color-steel)]">Size {item.size}</p> : null}
+                  </div>
+                  <span className="font-mono text-sm text-[var(--color-paper)]">
+                    {quotedItem
+                      ? `${quoteQuery.data?.currency} ${quotedItem.line_subtotal}`
+                      : quoteQuery.isError
+                        ? "Price unavailable"
+                        : "Checking price…"}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
-          <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-            <span className="text-[var(--color-paper)]">Estimated cart total</span>
-            <span className="font-mono text-lg text-[var(--color-signal)]">
-              {items[0].currency} {totalPrice.toFixed(2)}
-            </span>
-          </div>
+          {quoteQuery.data ? (
+            <div role="status" className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
+              <span className="text-[var(--color-paper)]">Merchandise subtotal</span>
+              <span className="font-mono text-lg text-[var(--color-signal)]">
+                {quoteQuery.data.currency} {quoteQuery.data.merchandise_subtotal}
+              </span>
+            </div>
+          ) : quoteQuery.isError ? (
+            <div className="mt-6 border-t border-white/10 pt-4 text-left">
+              <p role="status" className="text-sm text-[var(--color-signal)]">
+                We couldn&apos;t verify current prices or availability. Your saved bag has not been changed.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => void quoteQuery.refetch()}
+              >
+                Retry price check
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-6 border-t border-white/10 pt-4 text-sm text-[var(--color-steel)]">
+              Checking current product prices&hellip;
+            </p>
+          )}
         </section>
 
         <section aria-labelledby="checkout-payment-heading" className="rounded-3xl border border-white/10 bg-[var(--color-panel)] p-6 text-center">

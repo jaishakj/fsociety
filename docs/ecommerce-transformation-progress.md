@@ -1,6 +1,6 @@
 # E-commerce transformation progress
 
-This document tracks implementation against `writing-block (4).md`. That specification covers the storefront, commerce API, payments, operations, and launch readiness; it directs work to proceed in deployable stages when the full scope cannot fit into one change. This commit delivers the first safety-focused increment and does not claim the full transformation is complete.
+This document tracks implementation against `writing-block (4).md`. That specification covers the storefront, commerce API, payments, operations, and launch readiness; it directs work to proceed in deployable stages when the full scope cannot fit into one change. The transformation is still in progress.
 
 ## Running notes
 
@@ -11,7 +11,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 - Removed the client-generated UPI payment link and QR code. A configured VPA alone cannot prove that a payment was received, and this app currently has no order creation or payment verification endpoint.
 - Checkout now explains that secure payment is unavailable, no order has been placed, and no payment has been taken. The customer's bag remains available for later.
-- The checkout summary labels its browser-calculated amount as an estimate; it is not a server-authoritative quote.
+- Before the checkout quote integration, the summary used a browser-calculated estimate. Checkout now displays the server-calculated merchandise subtotal, while the final payable total remains unavailable.
 - Removed the UPI settings from the web environment example; checkout no longer consumes them.
 - Corrected the registration rate-limit test to expect the API's existing `409 Conflict` response for a duplicate account.
 
@@ -29,6 +29,13 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Added additive migration `0007_customer_carts`. Its downgrade refuses to drop tables when saved cart data exists. Migration SQL was generated offline for review; no database was modified.
 - Verification: full API suite `28 passed`; Ruff passed for commerce code and migration; Alembic offline upgrade generated both cart tables and constraints. The existing product-schema Pydantic deprecation warning remains.
 
+## Checkout stage 1
+
+- Checkout now requests the merchandise quote from the API and displays server-returned product names, unit-derived line subtotals, and the merchandise subtotal. It checks that returned lines still match the bag before displaying prices.
+- While the quote loads, checkout does not present browser-stored prices as current prices. If the request fails, it preserves the bag, explains the price/availability check failed, and offers a retry.
+- Checkout still does not synchronize its local bag to the authenticated cart API. The payment action remains unavailable; shipping, tax, discounts, reservations, and final order totals are not yet calculated.
+- Verification: TypeScript build passed; web tests `4 passed`; Vite production build passed with the existing large-chunk warning.
+
 ## Existing foundation observed during audit
 
 - React/Vite storefront with product browsing, categories, product detail, local cart and wishlist, customer registration/sign-in, and shipping profiles.
@@ -39,7 +46,7 @@ These existing features have not been independently re-certified by this increme
 
 ## Remaining implementation
 
-1. **Commerce foundation:** persistent server-owned cart, product variants and SKU-level inventory, stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. The merchandise-only quote endpoint is now in place; the browser has not been switched to it yet.
+1. **Commerce foundation:** persistent server-owned cart, product variants and SKU-level inventory, stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. The merchandise-only quote endpoint is now used for checkout price display; local cart synchronization remains pending.
 2. **Verified payment:** integrate a real provider in test mode, create payment intents/orders on the API, verify signatures and webhooks server-side, handle idempotency/refunds, and only mark orders paid from verified provider events. No payment provider credentials are currently configured for this app.
 3. **Customer operations:** order status, cancellation/return eligibility and requests, shipment/tracking data, transactional email, support contact flow, and account recovery/verification.
 4. **Store operations:** protected admin UI for products, inventory, orders, customers, promotions, content, and settings, backed by role-checked API operations and audit history.
@@ -52,4 +59,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-Connect the authenticated cart and merchandise quote APIs to the existing checkout/cart UI, preserving local cart data during the move and leaving purchase disabled until an order/payment flow is verified. Apply migration `0007` only to a non-production preview database before testing those routes. Do not re-enable direct client-to-VPA payment as a substitute for verified order/payment state.
+Connect the authenticated cart API to the existing cart UI with a documented local/server merge that never silently drops a saved item. Apply migration `0007` only to a non-production preview database before exercising persisted-cart routes. Then add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
