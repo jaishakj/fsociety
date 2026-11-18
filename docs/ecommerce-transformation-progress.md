@@ -4,9 +4,10 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 ## Waiting for owner input
 
-- **May I inspect and, if mismatched, correct only the Preview API `FRONTEND_URL`/CORS setting for `codex/publish-sizes-to-main` so the protected Preview storefront can load API data?** Production will remain untouched. I have not changed this setting or any secret values.
-- The deployed storefront renders, but its category and new-arrival requests fail in the in-app browser. The API health, OpenAPI, and public categories endpoints return successfully through Vercel's authenticated fetch. The remaining cause could be Preview SSO or an origin mismatch; the Vercel connector did not return the sensitive `FRONTEND_URL` value for comparison.
-- The authenticated cart round trip cannot be confirmed until this Preview access/origin issue is resolved. No test account was created and no cart data was written.
+- **May I make the isolated Preview API publicly reachable by changing only its Preview deployment protection, so the storefront can call it without a Vercel SSO session?** This would expose the Preview API URL and public catalogue/auth endpoints; account and cart routes still require app authentication, and they use the isolated Preview database. Production protection and data would remain untouched. I have not changed this access setting.
+- The owner approved correcting only the Preview API `FRONTEND_URL`. I set it to the active Preview web origin, kept it sensitive and scoped to `codex/publish-sizes-to-main`, then rebuilt the API Preview from commit `be2813e`.
+- The API Preview build is `READY`, and the public categories endpoint returns data through Vercel's authenticated fetch. The browser storefront still shows catalogue loading. A direct unauthenticated request to the API branch alias receives Vercel's HTML access page instead of JSON; an `OPTIONS` preflight also returns without CORS headers. Opening the API URL directly in the signed-in browser returns JSON. This points to Vercel Preview SSO intercepting cross-origin requests; changing CORS alone cannot bypass that gate.
+- The authenticated cart round trip remains unverified. No test account was created and no cart data was written.
 
 ## Running notes
 
@@ -50,7 +51,8 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Checkout waits for cart sync before showing the order summary or requesting server prices. The API DTO now includes category metadata needed to render persisted cart sizes correctly.
 - Verification: web TypeScript build passed; web tests `8 passed`; API tests `28 passed`; targeted API Ruff checks passed; Vite production build passed. The production bundle still reports a chunk larger than 500 kB. The web lint script could not run because ESLint is not installed in the web package.
 - Preview deployment verification on 2026-11-18: API and web deployments for commit `c22f1ec` are `READY`; API `/health` and `/openapi.json` returned `200`, the OpenAPI document lists the cart and auth routes, and public category data returned seven entries. The web homepage returned `200`, and its deployed JavaScript contains the branch-specific Preview API URL rather than the Production API URL.
-- Browser verification is incomplete: the storefront displayed “Categories are temporarily unavailable” and “Couldn't load new arrivals.” The API data call succeeded through Vercel's server-side fetch, so this appears specific to browser access from the protected Preview; CORS versus SSO has not been isolated. The authenticated cart GET/PUT flow has not been exercised.
+- Browser verification is incomplete: the storefront displayed “Categories are temporarily unavailable” and “Couldn't load new arrivals.” The API data call succeeded through Vercel's authenticated fetch, but cross-origin browser requests are intercepted by Preview SSO. The authenticated cart GET/PUT flow has not been exercised.
+- Follow-up on 2026-11-18: the owner approved a Preview-only `FRONTEND_URL` check/fix. It was set to the active Preview web origin and the API was redeployed from `be2813e` as `api-mhq6pgcrq-jaishak2003-gmailcoms-projects.vercel.app` (`READY`). Direct unauthenticated browser-origin requests to the API branch alias receive Vercel's HTML access page rather than catalogue JSON, while Vercel's authenticated fetch and the signed-in browser can read the JSON. This indicates Preview SSO is intercepting the cross-origin browser request. The storefront still cannot load its catalogue; no SSO setting was changed.
 
 ## Existing foundation observed during audit
 
