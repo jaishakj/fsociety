@@ -2,6 +2,12 @@
 
 This document tracks implementation against `writing-block (4).md`. That specification covers the storefront, commerce API, payments, operations, and launch readiness; it directs work to proceed in deployable stages when the full scope cannot fit into one change. The transformation is still in progress.
 
+## Waiting for owner input
+
+- **May I inspect and, if mismatched, correct only the Preview API `FRONTEND_URL`/CORS setting for `codex/publish-sizes-to-main` so the protected Preview storefront can load API data?** Production will remain untouched. I have not changed this setting or any secret values.
+- The deployed storefront renders, but its category and new-arrival requests fail in the in-app browser. The API health, OpenAPI, and public categories endpoints return successfully through Vercel's authenticated fetch. The remaining cause could be Preview SSO or an origin mismatch; the Vercel connector did not return the sensitive `FRONTEND_URL` value for comparison.
+- The authenticated cart round trip cannot be confirmed until this Preview access/origin issue is resolved. No test account was created and no cart data was written.
+
 ## Running notes
 
 - The original attachment path is unavailable in this session. The prior audited roadmap and the spec's staged-work instruction are preserved here; implementation is continuing from the recorded next step without expanding the plan.
@@ -43,7 +49,8 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Account changes are isolated: the cart view waits for the active account's sync before showing items, an account's unsynced local bag is cached separately, and signing out clears its visible in-memory bag while preserving it for that account's next sign-in. Sync failures keep the local bag and expose a retry.
 - Checkout waits for cart sync before showing the order summary or requesting server prices. The API DTO now includes category metadata needed to render persisted cart sizes correctly.
 - Verification: web TypeScript build passed; web tests `8 passed`; API tests `28 passed`; targeted API Ruff checks passed; Vite production build passed. The production bundle still reports a chunk larger than 500 kB. The web lint script could not run because ESLint is not installed in the web package.
-- The Preview schema is ready, but signed-in server-cart round trips and frontend-to-API cart sync remain unverified in a fresh deployed Preview.
+- Preview deployment verification on 2026-11-18: API and web deployments for commit `c22f1ec` are `READY`; API `/health` and `/openapi.json` returned `200`, the OpenAPI document lists the cart and auth routes, and public category data returned seven entries. The web homepage returned `200`, and its deployed JavaScript contains the branch-specific Preview API URL rather than the Production API URL.
+- Browser verification is incomplete: the storefront displayed “Categories are temporarily unavailable” and “Couldn't load new arrivals.” The API data call succeeded through Vercel's server-side fetch, so this appears specific to browser access from the protected Preview; CORS versus SSO has not been isolated. The authenticated cart GET/PUT flow has not been exercised.
 
 ## Existing foundation observed during audit
 
@@ -68,4 +75,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-Push the existing working branch to trigger fresh API and web Preview builds, then verify signed-in cart GET/PUT, account switching, and frontend-to-API behavior. After that, add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
+Resolve the Preview browser-to-API access/origin mismatch, then verify signed-in cart GET/PUT, account switching, and frontend-to-API behavior. After that, add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
