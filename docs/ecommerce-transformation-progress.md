@@ -2,15 +2,11 @@
 
 This document tracks implementation against `writing-block (4).md`. That specification covers the storefront, commerce API, payments, operations, and launch readiness; it directs work to proceed in deployable stages when the full scope cannot fit into one change. The transformation is still in progress.
 
-## Waiting for owner input
-
-- **May I apply additive migration `0007_customer_carts` to the isolated Preview Neon database and verify signed-in cart sync there?** It creates cart tables; its downgrade intentionally refuses after saved cart rows exist. No database migration or deployment has been applied for this stage.
-- This is the next planned step because the persisted cart API cannot be exercised until the Preview schema is upgraded. Production remains untouched.
-
 ## Running notes
 
 - The original attachment path is unavailable in this session. The prior audited roadmap and the spec's staged-work instruction are preserved here; implementation is continuing from the recorded next step without expanding the plan.
 - Decision: the merchandise quote is public because it exposes only current public catalogue prices, has no personal data or purchase side effects, and is rate-limited to 30 requests per minute. No stock is reserved, so it cannot authorize an order.
+- On 2026-11-18, the owner approved applying migration `0007_customer_carts` to the isolated Neon Preview branch `fsociety-codex-publish-sizes-preview`. The migration was applied transactionally from the generated Alembic SQL; the Preview version is `0007`, both cart tables and constraints are present, and Production remains at `0006`.
 
 ## Current increment
 
@@ -47,7 +43,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Account changes are isolated: the cart view waits for the active account's sync before showing items, an account's unsynced local bag is cached separately, and signing out clears its visible in-memory bag while preserving it for that account's next sign-in. Sync failures keep the local bag and expose a retry.
 - Checkout waits for cart sync before showing the order summary or requesting server prices. The API DTO now includes category metadata needed to render persisted cart sizes correctly.
 - Verification: web TypeScript build passed; web tests `8 passed`; API tests `28 passed`; targeted API Ruff checks passed; Vite production build passed. The production bundle still reports a chunk larger than 500 kB. The web lint script could not run because ESLint is not installed in the web package.
-- The preview database migration has not been applied, so signed-in server-cart round trips and frontend-to-API cart sync remain unverified in a deployed Preview.
+- The Preview schema is ready, but signed-in server-cart round trips and frontend-to-API cart sync remain unverified in a fresh deployed Preview.
 
 ## Existing foundation observed during audit
 
@@ -72,4 +68,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-Apply migration `0007` only to the isolated non-production Preview database, then verify signed-in cart GET/PUT, account switching, and frontend-to-API behavior. After that, add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
+Push the existing working branch to trigger fresh API and web Preview builds, then verify signed-in cart GET/PUT, account switching, and frontend-to-API behavior. After that, add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
