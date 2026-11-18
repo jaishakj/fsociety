@@ -2,6 +2,10 @@
 
 This document tracks implementation against `writing-block (4).md`. That specification covers the storefront, commerce API, payments, operations, and launch readiness; it directs work to proceed in deployable stages when the full scope cannot fit into one change. The transformation is still in progress.
 
+## Question for the owner — needed before inventory/order verification
+
+Please provide a verified per-product stock breakdown by apparel size, and confirm I may import those values only into the isolated Preview Neon branch. Use `0` only for sizes confirmed to have no stock. I have not changed product quantities; splitting aggregate stock without the real counts could change availability and oversell products. Production will remain untouched.
+
 ## Waiting for owner input
 
 - **May I make the isolated Preview API publicly reachable by changing only its Preview deployment protection, so the storefront can call it without a Vercel SSO session?** This would expose the Preview API URL and public catalogue/auth endpoints; account and cart routes still require app authentication, and they use the isolated Preview database. Production protection and data would remain untouched. I have not changed this access setting.
