@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { FilterRail } from "@/components/product/FilterRail";
@@ -7,15 +6,15 @@ import { AmbientGlow } from "@/components/ui/AmbientGlow";
 import { Button } from "@/components/ui/Button";
 import { StateMessage } from "@/components/ui/StateMessage";
 import { useCategories, useProducts } from "@/hooks/useProducts";
+import { parseShopFilters, serializeShopFilters } from "@/lib/shopFilters";
 import type { ProductFilters } from "@/types/product";
 
 export default function ShopPage() {
-  const [searchParams] = useSearchParams();
-  const [filters, setFilters] = useState<ProductFilters>(() => ({
-    page: 1,
-    sort: "newest",
-    category: searchParams.get("category") ?? undefined,
-  }));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = parseShopFilters(searchParams);
+  const updateFilters = (nextFilters: ProductFilters, options?: { replace?: boolean }) => {
+    setSearchParams((current) => serializeShopFilters(nextFilters, current), options);
+  };
   const { data: categories } = useCategories();
   const { data: products, isLoading, isError, refetch } = useProducts(filters);
 
@@ -33,7 +32,7 @@ export default function ShopPage() {
       </p>
 
       <div className="relative z-10 mt-6">
-        <FilterRail categories={categories ?? []} filters={filters} onChange={setFilters} />
+        <FilterRail categories={categories ?? []} filters={filters} onChange={updateFilters} />
       </div>
 
       <div className="relative z-10 mt-8">
@@ -57,7 +56,7 @@ export default function ShopPage() {
                 <button
                   data-cursor
                   disabled={page <= 1}
-                  onClick={() => setFilters((prev) => ({ ...prev, page: page - 1 }))}
+                  onClick={() => updateFilters({ ...filters, page: page - 1 })}
                   className="rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--color-steel)] disabled:opacity-30"
                 >
                   Prev
@@ -68,7 +67,7 @@ export default function ShopPage() {
                 <button
                   data-cursor
                   disabled={page >= totalPages}
-                  onClick={() => setFilters((prev) => ({ ...prev, page: page + 1 }))}
+                  onClick={() => updateFilters({ ...filters, page: page + 1 })}
                   className="rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--color-steel)] disabled:opacity-30"
                 >
                   Next

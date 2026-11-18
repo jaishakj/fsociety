@@ -23,6 +23,12 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Removed the UPI settings from the web environment example; checkout no longer consumes them.
 - Corrected the registration rate-limit test to expect the API's existing `409 Conflict` response for a duplicate account.
 
+## Storefront filter state stage
+
+- The shop page now reads category, search query, minimum and maximum price, sort order, and page number from the URL. Filter changes update the URL, so shared links, refreshes, and browser Back/Forward restore the selected state.
+- Invalid query values fall back to safe defaults, unrelated query parameters are preserved, and default values are omitted when serializing. Price input edits replace the current history entry; category, sort, and pagination changes create navigable entries. Sorting resets pagination, and a minimum price of zero can be cleared.
+- Verification on 2026-11-18: web tests `11 passed`; TypeScript build passed; Vite production build passed. The existing large-chunk warning remains. Web lint is unavailable because ESLint is not installed in the web package.
+
 ## Commerce foundation stage 1
 
 - Added `POST /api/v1/cart/merchandise-quote`. It accepts product IDs and quantities, looks up published products, calculates decimal prices on the server, checks aggregate quantities against current product-level stock, rejects mixed currencies, and limits the public endpoint to 30 requests per minute.

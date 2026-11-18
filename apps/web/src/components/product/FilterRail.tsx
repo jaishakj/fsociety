@@ -4,7 +4,7 @@ import { OriginDropdown } from "@/components/ui/origin-dropdown";
 interface FilterRailProps {
   categories: Category[];
   filters: ProductFilters;
-  onChange: (filters: ProductFilters) => void;
+  onChange: (filters: ProductFilters, options?: { replace?: boolean }) => void;
 }
 
 export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
@@ -57,7 +57,7 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
             id: option.value,
             label: option.label,
             selected: selectedSort.value === option.value,
-            onSelect: () => onChange({ ...filters, sort: option.value as ProductFilters["sort"] }),
+            onSelect: () => onChange({ ...filters, sort: option.value, page: 1 }),
           }))}
         />
       </div>
@@ -72,7 +72,10 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
           data-cursor
           value={filters.min_price ?? ""}
           onChange={(e) =>
-            onChange({ ...filters, min_price: e.target.value ? Number(e.target.value) : undefined, page: 1 })
+            onChange(
+              { ...filters, min_price: e.target.value ? Number(e.target.value) : undefined, page: 1 },
+              { replace: true },
+            )
           }
           className="min-h-12 w-24 rounded-xl border border-white/10 bg-[var(--color-void)] px-3 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
         />
@@ -85,11 +88,14 @@ export function FilterRail({ categories, filters, onChange }: FilterRailProps) {
           data-cursor
           value={filters.max_price ?? ""}
           onChange={(e) =>
-            onChange({ ...filters, max_price: e.target.value ? Number(e.target.value) : undefined, page: 1 })
+            onChange(
+              { ...filters, max_price: e.target.value ? Number(e.target.value) : undefined, page: 1 },
+              { replace: true },
+            )
           }
           className="min-h-12 w-24 rounded-xl border border-white/10 bg-[var(--color-void)] px-3 text-[var(--color-paper)] placeholder:text-[var(--color-steel)]"
         />
-        {filters.min_price || filters.max_price ? (
+        {filters.min_price !== undefined || filters.max_price !== undefined ? (
           <button
             data-cursor
             type="button"
