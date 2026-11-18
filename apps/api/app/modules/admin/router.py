@@ -5,7 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, File, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status
 from vercel.oidc.aio import get_vercel_oidc_token
 
 from app.api.deps import AdminUser, DbSession
@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.image_uploads import validate_and_normalize_image
 from app.modules.products import repository, service
 from app.modules.products.importers import import_products
+from app.modules.products.models import ProductStatus
 from app.modules.products.schemas import (
     CategoryCreate,
     CategoryOut,
@@ -20,12 +21,34 @@ from app.modules.products.schemas import (
     ImportResult,
     ProductCreate,
     ProductImageOut,
+    ProductListOut,
     ProductOut,
     ProductUpdate,
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+@router.get("/products", response_model=ProductListOut)
+def list_admin_products(
+    db: DbSession,
+    _admin: AdminUser,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    q: str | None = Query(None, min_length=2, max_length=100),
+    status: ProductStatus | None = None,
+):
+    """List all product states for the protected inventory editor."""
+    items, total = repository.list_products(
+        db,
+        page=page,
+        page_size=page_size,
+        search=q,
+        status=status,
+        sort="newest",
+    )
+    return ProductListOut(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.post("/categories", response_model=CategoryOut, status_code=201)

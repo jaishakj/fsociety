@@ -24,6 +24,9 @@ export function NavBar() {
   const reduceMotion = useReducedMotion();
   const customerAuth = useCustomerAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navLinks = customerAuth.isAdmin
+    ? [...NAV_LINKS, { to: "/admin/inventory", label: "Inventory" }]
+    : NAV_LINKS;
 
   const dialogRef = useDialogFocusRestore<HTMLDivElement>(mobileOpen);
 
@@ -35,7 +38,7 @@ export function NavBar() {
         </Link>
 
         <nav aria-label="Primary navigation" className="hidden gap-6 text-sm text-[var(--color-steel)] md:flex">
-          {NAV_LINKS.filter((link) => link.label !== "Wishlist").map((link) => (
+          {navLinks.filter((link) => link.label !== "Wishlist").map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -139,7 +142,7 @@ export function NavBar() {
                 </button>
               </div>
               <nav className="mt-6 flex flex-col gap-4">
-                {NAV_LINKS.map((link) => (
+                {navLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}

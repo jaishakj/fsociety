@@ -28,6 +28,14 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Removed the UPI settings from the web environment example; checkout no longer consumes them.
 - Corrected the registration rate-limit test to expect the API's existing `409 Conflict` response for a duplicate account.
 
+## Protected inventory interface increment
+
+- Added role-checked `GET /api/v1/admin/products`, including draft, published, and archived products with their images, categories, and size variants. Search, status filtering, and pagination reuse the product repository.
+- Added `/admin/inventory` for users with the API-provided `admin` role. The inventory link only appears for admins; the API remains the permission boundary.
+- Footwear keeps aggregate unit stock. For apparel with no size variants, the form requires a confirmed count for every supported size before conversion; it never splits existing aggregate stock automatically. Once size inventory exists, blank new sizes stay unconfigured and blank existing fields preserve their current quantities.
+- No inventory values were entered. Real counts still need to come from the store owner. The admin UI does not create products or manage orders/customers/promotions.
+- Verification on 2026-11-18: API suite `47 passed`; changed admin API files pass Ruff; web tests `11 passed`; TypeScript build and Vite production build passed. The Vite large-chunk warning remains. Full API Ruff reports 20 pre-existing findings in untouched files. Browser admin sign-in remains unverified because the Preview deployment uses Vercel SSO and no admin browser session is available.
+
 ## Storefront filter state stage
 
 - The shop page now reads category, search query, minimum and maximum price, sort order, and page number from the URL. Filter changes update the URL, so shared links, refreshes, and browser Back/Forward restore the selected state.
@@ -70,7 +78,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 - React/Vite storefront with product browsing, categories, product detail, local cart and wishlist, customer registration/sign-in, and shipping profiles.
 - FastAPI/PostgreSQL API with product/category reads, admin product/category APIs, customer authentication, and shipping-profile access controls.
-- The repository's Alembic history now reaches `0008_product_variants`; the isolated Preview database is verified at `0007_customer_carts`, and Production was last verified at `0006_customer_accounts`. The Preview migration `0008` remains pending owner authorization; Production has not been changed.
+- The repository's Alembic history and isolated Preview database are both at `0008_product_variants`; Production was last verified at `0006_customer_accounts` and has not been changed.
 
 These existing features have not been independently re-certified by this increment. Signed-in carts are persisted through the API and checkout gets a server-calculated merchandise subtotal, but order placement, shipping, tax, payment, and final totals are incomplete. The admin APIs do not amount to a complete admin dashboard.
 
@@ -79,7 +87,7 @@ These existing features have not been independently re-certified by this increme
 1. **Commerce foundation:** enter real per-size quantities for existing products, then add stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. Migration `0008` is applied to Preview; the variants table is empty, so existing products continue to use aggregate stock until genuine size quantities are supplied. Signed-in cart sync and the merchandise-only quote endpoint are implemented.
 2. **Verified payment:** integrate a real provider in test mode, create payment intents/orders on the API, verify signatures and webhooks server-side, handle idempotency/refunds, and only mark orders paid from verified provider events. No payment provider credentials are currently configured for this app.
 3. **Customer operations:** order status, cancellation/return eligibility and requests, shipment/tracking data, transactional email, support contact flow, and account recovery/verification.
-4. **Store operations:** protected admin UI for products, inventory, orders, customers, promotions, content, and settings, backed by role-checked API operations and audit history.
+4. **Store operations:** a protected inventory interface is now present. Product creation, orders, customers, promotions, content, settings, and audit history still need admin screens and role-checked API operations.
 5. **Storefront completeness:** persistent consent-based newsletter and unsubscribe, product reviews, accurate merchandising/bestsellers, policy/trust content, and product structured data/sitemap/metadata. Search and filter URL state are implemented.
 6. **Launch verification:** automated API and browser tests for registration, catalogue, inventory races, checkout, provider callbacks, refunds, and admin permissions; accessibility/performance checks; staging deployment verification.
 
@@ -89,4 +97,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-Next, enter genuine per-size stock through the product administration/import path and verify variant writes. Resolve the separate Preview SSO browser-to-API block before browser-testing signed-in cart GET/PUT and account switching. Continue with order/stock reservations and a verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
+Next, deploy this inventory interface to Preview, verify access using an authorized admin session, then enter genuine per-size counts and verify the stored variant writes. Resolve the separate Preview SSO browser-to-API block before browser-testing signed-in cart GET/PUT and account switching. Continue with order/stock reservations and a verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.

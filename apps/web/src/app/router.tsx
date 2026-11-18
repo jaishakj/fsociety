@@ -19,6 +19,7 @@ import SignUpPage from "@/pages/account/SignUpPage";
 import SignInPage from "@/pages/account/SignInPage";
 import AccountPage from "@/pages/account/AccountPage";
 import ShippingProfilePage from "@/pages/account/ShippingProfilePage";
+import AdminInventoryPage from "@/pages/admin/AdminInventoryPage";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "/sign-in/*", element: <SignInPage /> },
       { path: "/account", element: <AccountPage /> },
       { path: "/account/setup", element: <ShippingProfilePage /> },
+      { path: "/admin/inventory", element: <AdminInventoryPage /> },
       { path: "/wishlist", element: <WishlistPage /> },
       { path: legalRoutes.privacy, element: <PrivacyPolicyPage /> },
       { path: legalRoutes.terms, element: <TermsOfServicePage /> },

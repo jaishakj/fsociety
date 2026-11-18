@@ -22,6 +22,7 @@ type CustomerAuthValue = {
   configured: boolean;
   isLoaded: boolean;
   isSignedIn: boolean;
+  isAdmin: boolean;
   userId: string | null;
   email: string | null;
   getToken: () => Promise<string | null>;
@@ -165,6 +166,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     configured: true,
     isLoaded,
     isSignedIn: Boolean(user),
+    isAdmin: Boolean(user?.roles.includes("admin")),
     userId: user?.id ?? null,
     email: user?.email ?? null,
     getToken,
