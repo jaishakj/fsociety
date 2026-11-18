@@ -12,7 +12,13 @@ from app.db.base import Base
 from app.main import app
 from app.modules.auth.models import User
 from app.modules.commerce.models import CustomerCart, CustomerCartItem
-from app.modules.products.models import Category, Product, ProductImage, ProductStatus
+from app.modules.products.models import (
+    Category,
+    Product,
+    ProductImage,
+    ProductStatus,
+    ProductVariant,
+)
 
 
 @pytest.fixture
@@ -26,6 +32,7 @@ def cart_client() -> Generator[tuple[TestClient, dict[str, UUID], sessionmaker],
         User.__table__,
         Category.__table__,
         Product.__table__,
+        ProductVariant.__table__,
         ProductImage.__table__,
         CustomerCart.__table__,
         CustomerCartItem.__table__,
@@ -46,8 +53,7 @@ def cart_client() -> Generator[tuple[TestClient, dict[str, UUID], sessionmaker],
         sarees = Category(name="Sarees", slug="sarees")
         db.add_all([shoes, dresses, sarees])
         db.flush()
-        products = [
-            Product(
+        shoes_product = Product(
                 name="Everyday Sandal",
                 slug="everyday-sandal",
                 price="900.00",
@@ -55,8 +61,8 @@ def cart_client() -> Generator[tuple[TestClient, dict[str, UUID], sessionmaker],
                 stock=4,
                 status=ProductStatus.PUBLISHED,
                 category_id=shoes.id,
-            ),
-            Product(
+            )
+        dress_product = Product(
                 name="Cotton Dress",
                 slug="cotton-dress",
                 price="1800.00",
@@ -64,8 +70,12 @@ def cart_client() -> Generator[tuple[TestClient, dict[str, UUID], sessionmaker],
                 stock=4,
                 status=ProductStatus.PUBLISHED,
                 category_id=dresses.id,
-            ),
-            Product(
+                variants=[
+                    ProductVariant(size="XS", sku="COTTON-DRESS-XS", stock=2),
+                    ProductVariant(size="S", sku="COTTON-DRESS-S", stock=2),
+                ],
+            )
+        saree_product = Product(
                 name="Silk Saree",
                 slug="silk-saree",
                 price="2400.00",
@@ -73,8 +83,8 @@ def cart_client() -> Generator[tuple[TestClient, dict[str, UUID], sessionmaker],
                 stock=4,
                 status=ProductStatus.PUBLISHED,
                 category_id=sarees.id,
-            ),
-        ]
+            )
+        products = [shoes_product, dress_product, saree_product]
         db.add_all(products)
         db.commit()
         product_ids = {product.slug: product.id for product in products}
@@ -177,6 +187,43 @@ def test_cart_aggregates_duplicate_lines_before_stock_check(cart_client) -> None
     assert response.status_code == 409
     with test_sessions() as db:
         assert db.scalar(select(CustomerCart).where(CustomerCart.user_id == ids["user_id"])) is None
+
+
+def test_cart_enforces_size_specific_stock_and_marks_changed_stock_unavailable(cart_client) -> None:
+    client, ids, test_sessions = cart_client
+    product_id = ids["cotton-dress"]
+
+    too_many_in_one_size = client.put(
+        "/api/v1/cart",
+        json={"items": [{"product_id": str(product_id), "quantity": 3, "size": "XS"}]},
+    )
+    assert too_many_in_one_size.status_code == 409
+    assert too_many_in_one_size.json()["detail"] == "Requested size is unavailable"
+
+    saved = client.put(
+        "/api/v1/cart",
+        json={"items": [{"product_id": str(product_id), "quantity": 2, "size": "XS"}]},
+    )
+    assert saved.status_code == 200
+    assert saved.json()["items"][0]["is_available"] is True
+
+    with test_sessions() as db:
+        variant = db.scalar(
+            select(ProductVariant).where(
+                ProductVariant.product_id == product_id,
+                ProductVariant.size == "XS",
+            )
+        )
+        assert variant is not None
+        variant.stock = 1
+        product = db.get(Product, product_id)
+        assert product is not None
+        product.stock = 3
+        db.commit()
+
+    refreshed = client.get("/api/v1/cart")
+    assert refreshed.status_code == 200
+    assert refreshed.json()["items"][0]["is_available"] is False
 
 
 def test_cart_replacement_merges_duplicate_product_size_and_delete_clears(cart_client) -> None:

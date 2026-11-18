@@ -19,7 +19,11 @@ export default function CheckoutPage() {
   const [shippingReady, setShippingReady] = useState(false);
   const [shippingError, setShippingError] = useState(false);
   const [shippingMissing, setShippingMissing] = useState(false);
-  const quoteItems = items.map((item) => ({ product_id: item.productId, quantity: item.quantity }));
+  const quoteItems = items.map((item) => ({
+    product_id: item.productId,
+    quantity: item.quantity,
+    size: item.size ?? null,
+  }));
   const itemMissingSize = items.find((item) =>
     productUsesApparelSizes(item.categorySlug, item.categoryName) && !item.size,
   );
@@ -30,7 +34,9 @@ export default function CheckoutPage() {
       if (
         data.items.length !== quoteItems.length ||
         data.items.some((line, index) =>
-          line.product_id !== quoteItems[index].product_id || line.quantity !== quoteItems[index].quantity,
+          line.product_id !== quoteItems[index].product_id ||
+          line.quantity !== quoteItems[index].quantity ||
+          line.size !== quoteItems[index].size,
         )
       ) {
         throw new Error("The price response did not match the saved bag");

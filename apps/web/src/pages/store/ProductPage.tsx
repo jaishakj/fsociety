@@ -60,9 +60,38 @@ export default function ProductPage() {
   }
 
   const activeImage = product.images[selectedIndex] ?? product.images[0];
-  const outOfStock = product.stock <= 0;
-  const lowStock = !outOfStock && product.stock <= LOW_STOCK_THRESHOLD;
+  const productVariants = product.variants ?? [];
+  const usesVariantInventory = productVariants.length > 0;
+  const selectedVariant = selectedSize
+    ? productVariants.find((variant) => variant.size === selectedSize)
+    : undefined;
+  const outOfStock = usesVariantInventory
+    ? productVariants.every((variant) => variant.stock <= 0)
+    : product.stock <= 0;
+  const visibleStock = usesVariantInventory
+    ? selectedSize
+      ? selectedVariant?.stock ?? 0
+      : null
+    : product.stock;
+  const lowStock = visibleStock !== null && visibleStock > 0 && visibleStock <= LOW_STOCK_THRESHOLD;
   const availableSizes = productSizesForCategory(product.category.slug, product.category.name);
+  const unavailableSizes = usesVariantInventory
+    ? availableSizes.filter((size) => !productVariants.some((variant) => variant.size === size && variant.stock > 0))
+    : [];
+  const availableQuantity = usesVariantInventory
+    ? selectedSize
+      ? selectedVariant?.stock ?? 0
+      : Math.max(0, ...productVariants.map((variant) => variant.stock))
+    : product.stock;
+
+  const handleSizeChange = (size: ProductSize) => {
+    setSelectedSize(size);
+    if (!usesVariantInventory) return;
+    const variantStock = productVariants.find((variant) => variant.size === size)?.stock ?? 0;
+    if (variantStock > 0) {
+      setQuantity((current) => Math.max(1, Math.min(current, variantStock)));
+    }
+  };
 
   const handleAddToBag = () => {
     setAdded(addItem(product, quantity, selectedSize));
@@ -146,7 +175,7 @@ export default function ProductPage() {
             <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-signal)]">
               {product.category.name}
             </span>
-            {lowStock ? <Chip>Only {product.stock} left</Chip> : null}
+            {lowStock ? <Chip>Only {visibleStock} left</Chip> : null}
           </div>
           <h1 className="mt-2 font-display text-3xl leading-tight text-[var(--color-paper)] sm:text-4xl">
             {product.name}
@@ -162,7 +191,12 @@ export default function ProductPage() {
 
           {availableSizes.length > 0 ? (
             <div className="mt-6 border-t border-white/10 pt-5">
-              <ProductSizePicker sizes={availableSizes} value={selectedSize} onChange={setSelectedSize} />
+              <ProductSizePicker
+                sizes={availableSizes}
+                value={selectedSize}
+                onChange={handleSizeChange}
+                unavailableSizes={unavailableSizes}
+              />
             </div>
           ) : null}
 
@@ -185,8 +219,8 @@ export default function ProductPage() {
                   type="button"
                   data-cursor
                   aria-label="Increase quantity"
-                  disabled={quantity >= product.stock}
-                  onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+                  disabled={quantity >= availableQuantity}
+                  onClick={() => setQuantity((q) => Math.min(availableQuantity, q + 1))}
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-[var(--color-steel)] transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-30"
                 >
                   <Plus size={14} />
@@ -208,7 +242,12 @@ export default function ProductPage() {
 
       {availableSizes.length > 0 ? (
         <div className="relative z-10 mt-8 hidden rounded-2xl border border-white/10 bg-[var(--color-panel)] p-5 sm:p-6 md:block">
-          <ProductSizePicker sizes={availableSizes} value={selectedSize} onChange={setSelectedSize} />
+          <ProductSizePicker
+            sizes={availableSizes}
+            value={selectedSize}
+            onChange={handleSizeChange}
+            unavailableSizes={unavailableSizes}
+          />
         </div>
       ) : null}
 
@@ -230,8 +269,8 @@ export default function ProductPage() {
               type="button"
               data-cursor
               aria-label="Increase quantity"
-              disabled={quantity >= product.stock}
-              onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+              disabled={quantity >= availableQuantity}
+              onClick={() => setQuantity((q) => Math.min(availableQuantity, q + 1))}
               className="flex min-h-12 min-w-12 items-center justify-center rounded-full text-[var(--color-steel)] transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-30"
             >
               <Plus size={14} />
@@ -257,7 +296,7 @@ export default function ProductPage() {
         </button>
 
         <Chip>{product.category.name}</Chip>
-        {lowStock ? <Chip>Only {product.stock} left</Chip> : null}
+        {lowStock ? <Chip>Only {visibleStock} left</Chip> : null}
       </div>
 
       {product.images.length > 1 ? (

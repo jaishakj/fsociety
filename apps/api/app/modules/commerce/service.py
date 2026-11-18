@@ -1,4 +1,3 @@
-import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -18,23 +17,19 @@ from app.modules.commerce.schemas import (
     CustomerCartReplaceIn,
 )
 from app.modules.products.models import Product
-
-FOOTWEAR_CATEGORY_PATTERN = re.compile(
-    r"\b(foot\s*wears?|shoes?|sneakers?|trainers?|boots?|sandals?|slippers?|heels?|flats?)\b"
-)
-DRESS_CATEGORY_PATTERN = re.compile(r"\bdresses?\b")
-APPAREL_SIZES = {"S", "M", "L", "XL", "XXL"}
-DRESS_SIZES = APPAREL_SIZES | {"XS"}
+from app.modules.products.sizing import size_is_valid_for_category
 
 
 def _product_size_is_valid(product: Product, size: str | None) -> bool:
-    category_text = f"{product.category.slug} {product.category.name}".replace("-", " ").replace("_", " ").lower()
-    if FOOTWEAR_CATEGORY_PATTERN.search(category_text):
-        return size is None
-    if size is None:
-        return False
-    allowed_sizes = DRESS_SIZES if DRESS_CATEGORY_PATTERN.search(category_text) else APPAREL_SIZES
-    return size in allowed_sizes
+    return size_is_valid_for_category(product.category.slug, product.category.name, size)
+
+
+def _stock_for_size(product: Product, size: str | None) -> int:
+    variants = getattr(product, "variants", [])
+    if not variants:
+        return product.stock
+    variant = next((variant for variant in variants if variant.size == size), None)
+    return variant.stock if variant is not None else 0
 
 
 def _cart_item_out(item: CustomerCartItem, *, is_available: bool) -> CustomerCartItemOut:
@@ -60,8 +55,10 @@ def customer_cart_out(cart: CustomerCart | None) -> CustomerCartOut:
         return CustomerCartOut(cart_id=None, updated_at=None, items=[])
 
     quantities_by_product: dict[UUID, int] = defaultdict(int)
+    quantities_by_line: dict[tuple[UUID, str], int] = defaultdict(int)
     for item in cart.items:
         quantities_by_product[item.product_id] += item.quantity
+        quantities_by_line[(item.product_id, item.size)] += item.quantity
 
     items = [
         _cart_item_out(
@@ -69,6 +66,8 @@ def customer_cart_out(cart: CustomerCart | None) -> CustomerCartOut:
             is_available=(
                 item.product.status.value == "published"
                 and quantities_by_product[item.product_id] <= item.product.stock
+                and quantities_by_line[(item.product_id, item.size)]
+                <= _stock_for_size(item.product, item.size or None)
             ),
         )
         for item in cart.items
@@ -109,6 +108,11 @@ def replace_customer_cart(
         if not _product_size_is_valid(products_by_id[line.product_id], line.size):
             raise HTTPException(status_code=422, detail="Select a valid size for each product")
 
+    for (product_id, size), quantity in quantities_by_line.items():
+        product = products_by_id[product_id]
+        if quantity > _stock_for_size(product, size or None):
+            raise HTTPException(status_code=409, detail="Requested size is unavailable")
+
     cart = repository.get_or_create_customer_cart(db, user_id)
     cart.items.clear()
     db.flush()
@@ -133,11 +137,17 @@ def build_merchandise_quote(
 ) -> CartMerchandiseQuoteOut:
     products_by_id = {product.id: product for product in products}
     requested_quantities: dict[UUID, int] = defaultdict(int)
+    requested_by_line: dict[tuple[UUID, str], int] = defaultdict(int)
     for line in request.items:
         requested_quantities[line.product_id] += line.quantity
+        requested_by_line[(line.product_id, line.size or "")] += line.quantity
 
     if set(requested_quantities) != set(products_by_id):
         raise HTTPException(status_code=409, detail="One or more products are unavailable")
+
+    for line in request.items:
+        if not _product_size_is_valid(products_by_id[line.product_id], line.size):
+            raise HTTPException(status_code=422, detail="Select a valid size for each product")
 
     currencies = {product.currency for product in products_by_id.values()}
     if len(currencies) != 1:
@@ -146,6 +156,14 @@ def build_merchandise_quote(
     for product_id, quantity in requested_quantities.items():
         if quantity > products_by_id[product_id].stock:
             raise HTTPException(status_code=409, detail="Requested quantity is unavailable")
+
+    for line in request.items:
+        if not _product_size_is_valid(products_by_id[line.product_id], line.size):
+            raise HTTPException(status_code=422, detail="Select a valid size for each product")
+
+    for (product_id, size), quantity in requested_by_line.items():
+        if quantity > _stock_for_size(products_by_id[product_id], size or None):
+            raise HTTPException(status_code=409, detail="Requested size is unavailable")
 
     currency = next(iter(currencies))
     quote_lines: list[CartMerchandiseQuoteLineOut] = []
@@ -160,6 +178,7 @@ def build_merchandise_quote(
                 product_id=product.id,
                 name=product.name,
                 quantity=line.quantity,
+                size=line.size,
                 unit_price=unit_price,
                 line_subtotal=line_subtotal,
             )

@@ -3,11 +3,17 @@ import io
 import json
 from decimal import Decimal, InvalidOperation
 
+from fastapi import HTTPException
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.modules.products import repository, service
-from app.modules.products.models import Product, ProductImage, ProductStatus
-from app.modules.products.schemas import ImportResult, ImportRowError
+from app.modules.products.schemas import (
+    ImportResult,
+    ImportRowError,
+    ProductCreate,
+    ProductVariantWrite,
+)
 
 REQUIRED_FIELDS = {"name", "price", "category_slug"}
 
@@ -23,7 +29,7 @@ def _parse_json(content: bytes) -> list[dict]:
     if isinstance(data, dict):
         data = data.get("products", [])
     if not isinstance(data, list):
-        raise ValueError('JSON import must be a list of products or {"products": [...]}')
+        raise TypeError('JSON import must be a list of products or {"products": [...]}')
     return data
 
 
@@ -66,23 +72,31 @@ def import_products(db: Session, filename: str, content: bytes) -> ImportResult:
                 skipped += 1
                 continue
 
-            stock_raw = row.get("stock", 0)
+            stock_raw = row.get("stock")
             try:
-                stock = int(stock_raw) if stock_raw not in (None, "") else 0
+                stock = int(stock_raw) if stock_raw not in (None, "") else None
             except ValueError as exc:
                 raise ValueError("invalid stock") from exc
-            if stock < 0:
+            if stock is not None and stock < 0:
                 raise ValueError("stock cannot be negative")
 
             status_raw = str(row.get("status") or "draft").strip().lower()
-            if status_raw not in {s.value for s in ProductStatus}:
-                raise ValueError(f"invalid status '{status_raw}'")
+            variants_raw = row.get("variants", [])
+            if isinstance(variants_raw, str):
+                variants_raw = json.loads(variants_raw) if variants_raw.strip() else []
+            if not isinstance(variants_raw, list):
+                raise TypeError("variants must be a JSON array")
+            variants = [ProductVariantWrite.model_validate(item) for item in variants_raw]
 
             image_urls = row.get("images", [])
+            if image_urls is None:
+                image_urls = []
             if isinstance(image_urls, str):
                 image_urls = [u.strip() for u in image_urls.split("|") if u.strip()]
 
-            product = Product(
+            if not variants and stock is None:
+                stock = 0
+            product_data = ProductCreate(
                 name=name,
                 slug=slug,
                 description=row.get("description"),
@@ -90,15 +104,19 @@ def import_products(db: Session, filename: str, content: bytes) -> ImportResult:
                 currency=str(row.get("currency") or "INR"),
                 category_id=category.id,
                 stock=stock,
-                status=ProductStatus(status_raw),
+                status=status_raw,
+                variants=variants,
+                images=image_urls,
             )
-            for position, url in enumerate(image_urls):
-                product.images.append(ProductImage(url=url, position=position))
-
-            db.add(product)
-            db.flush()
+            with db.begin_nested():
+                service.build_product(db, product_data)
+                db.flush()
             created += 1
 
+        except HTTPException as exc:
+            errors.append(ImportRowError(row=index, error=str(exc.detail)))
+        except ValidationError as exc:
+            errors.append(ImportRowError(row=index, error=str(exc)))
         except Exception as exc:  # noqa: BLE001 - every row error is reported, not raised
             errors.append(ImportRowError(row=index, error=str(exc)))
 

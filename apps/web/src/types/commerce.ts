@@ -2,6 +2,7 @@ export interface CartMerchandiseQuoteLine {
   product_id: string;
   name: string;
   quantity: number;
+  size: "XS" | "S" | "M" | "L" | "XL" | "XXL" | null;
   unit_price: string;
   line_subtotal: string;
 }

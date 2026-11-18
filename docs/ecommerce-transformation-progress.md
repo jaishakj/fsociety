@@ -4,8 +4,8 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 ## Waiting for owner input
 
+- **May I apply migration `0008_product_variants` to the isolated Neon Preview branch only?** It adds per-size SKU and stock records and advances Preview from `0007` to `0008`; Production is not involved. I verified the Preview branch is at `0007` and the new table is absent. The downgrade refuses to remove the table once variant rows exist. Automatic approval review rejected the exact Preview transaction because the earlier approval covered migration `0007` only; no database changes were applied. The local code is not pushed while Preview is missing this schema.
 - **May I make the isolated Preview API publicly reachable by changing only its Preview deployment protection, so the storefront can call it without a Vercel SSO session?** This would expose the Preview API URL and public catalogue/auth endpoints; account and cart routes still require app authentication, and they use the isolated Preview database. Production protection and data would remain untouched. I have not changed this access setting.
-- The owner approved correcting only the Preview API `FRONTEND_URL`. I set it to the active Preview web origin, kept it sensitive and scoped to `codex/publish-sizes-to-main`, then rebuilt the API Preview from commit `be2813e`.
 - The API Preview build is `READY`, and the public categories endpoint returns data through Vercel's authenticated fetch. The browser storefront still shows catalogue loading. A direct unauthenticated request to the API branch alias receives Vercel's HTML access page instead of JSON; an `OPTIONS` preflight also returns without CORS headers. Opening the API URL directly in the signed-in browser returns JSON. This points to Vercel Preview SSO intercepting cross-origin requests; changing CORS alone cannot bypass that gate.
 - The authenticated cart round trip remains unverified. No test account was created and no cart data was written.
 
@@ -17,6 +17,11 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 ## Current increment
 
+- Checkout quote lines now carry each chosen size to the API; the API validates category/size combinations and returns the size so the client can verify the quote belongs to the current bag.
+- Added size-level variant inventory with a unique SKU per product size. Admin product create/update and CSV/JSON import accept variant stock; omitted SKUs are generated. Product-level stock remains the aggregate for compatibility. Existing products remain on legacy aggregate stock until real per-size quantities are entered; no distribution was invented.
+- Cart replacement, saved-cart availability, and checkout quotes enforce each configured size's stock. The product page and size prompt disable sizes that cannot satisfy the requested quantity.
+- The additive migration is checked in locally as `0008_product_variants`, but it is not applied to Neon Preview because automatic approval review rejected that specific database write. These changes have not been pushed, so the currently deployed Preview remains on the prior working commit.
+- Verification on 2026-11-18: API tests `44 passed`; Ruff passed for changed API files; web tests `11 passed`; TypeScript build passed; Vite production build passed with the existing large-chunk warning. One existing Pydantic deprecation warning remains.
 - Removed the client-generated UPI payment link and QR code. A configured VPA alone cannot prove that a payment was received, and this app currently has no order creation or payment verification endpoint.
 - Checkout now explains that secure payment is unavailable, no order has been placed, and no payment has been taken. The customer's bag remains available for later.
 - Before the checkout quote integration, the summary used a browser-calculated estimate. Checkout now displays the server-calculated merchandise subtotal, while the final payable total remains unavailable.
@@ -48,7 +53,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 - Checkout now requests the merchandise quote from the API and displays server-returned product names, unit-derived line subtotals, and the merchandise subtotal. It checks that returned lines still match the bag before displaying prices.
 - While the quote loads, checkout does not present browser-stored prices as current prices. If the request fails, it preserves the bag, explains the price/availability check failed, and offers a retry.
-- Checkout still does not synchronize its local bag to the authenticated cart API. The payment action remains unavailable; shipping, tax, discounts, reservations, and final order totals are not yet calculated.
+- At this stage, authenticated cart synchronization had not yet been added; that is documented in commerce foundation stage 3 below. Order placement remains unavailable, and shipping, tax, discounts, reservations, and final order totals are not yet calculated.
 - Verification: TypeScript build passed; web tests `4 passed`; Vite production build passed with the existing large-chunk warning.
 
 ## Commerce foundation stage 3 — authenticated cart sync
@@ -59,24 +64,23 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Verification: web TypeScript build passed; web tests `8 passed`; API tests `28 passed`; targeted API Ruff checks passed; Vite production build passed. The production bundle still reports a chunk larger than 500 kB. The web lint script could not run because ESLint is not installed in the web package.
 - Preview deployment verification on 2026-11-18: API and web deployments for commit `c22f1ec` are `READY`; API `/health` and `/openapi.json` returned `200`, the OpenAPI document lists the cart and auth routes, and public category data returned seven entries. The web homepage returned `200`, and its deployed JavaScript contains the branch-specific Preview API URL rather than the Production API URL.
 - Browser verification is incomplete: the storefront displayed “Categories are temporarily unavailable” and “Couldn't load new arrivals.” The API data call succeeded through Vercel's authenticated fetch, but cross-origin browser requests are intercepted by Preview SSO. The authenticated cart GET/PUT flow has not been exercised.
-- Follow-up on 2026-11-18: the owner approved a Preview-only `FRONTEND_URL` check/fix. It was set to the active Preview web origin and the API was redeployed from `be2813e` as `api-mhq6pgcrq-jaishak2003-gmailcoms-projects.vercel.app` (`READY`). Direct unauthenticated browser-origin requests to the API branch alias receive Vercel's HTML access page rather than catalogue JSON, while Vercel's authenticated fetch and the signed-in browser can read the JSON. This indicates Preview SSO is intercepting the cross-origin browser request. The storefront still cannot load its catalogue; no SSO setting was changed.
-- Later read-only recheck: the API still has a `FRONTEND_URL` entry scoped to Preview branch `codex/publish-sizes-to-main`. Vercel redacts the sensitive value from reads, so I could not independently compare its exact origin with the active web deployment; I did not replace it blindly. Latest web and API Preview deployments for `5c57d9f` are `READY`; the cross-origin SSO/preflight issue remains unresolved.
+- Follow-up on 2026-11-18: the owner approved a Preview-only `FRONTEND_URL` check/fix. Vercel does not return the sensitive value for independent comparison, even when the read requests decryption. I saved the exact active web Preview branch alias into only the API variable scoped to Preview branch `codex/publish-sizes-to-main`, preserving its sensitive type; Vercel confirms the variable metadata and scope. I redeployed only the API from the current remote branch commit `3d988c6`; the API deployment is `READY`. Vercel project settings still show SSO protection enabled for deployments. The local shell cannot make outbound HTTP requests, and no existing signed-in browser session was available, so the browser preflight could not be retested. No SSO setting was changed; browser-to-API access remains unverified and may still be blocked at Vercel's SSO layer.
 
 ## Existing foundation observed during audit
 
 - React/Vite storefront with product browsing, categories, product detail, local cart and wishlist, customer registration/sign-in, and shipping profiles.
 - FastAPI/PostgreSQL API with product/category reads, admin product/category APIs, customer authentication, and shipping-profile access controls.
-- Alembic history through migration `0006_customer_accounts`.
+- The repository's Alembic history now reaches `0008_product_variants`; the isolated Preview database is verified at `0007_customer_carts`, and Production was last verified at `0006_customer_accounts`. The Preview migration `0008` remains pending owner authorization; Production has not been changed.
 
-These existing features have not been independently re-certified by this increment. In particular, the cart and totals are still client-side, and the admin APIs do not amount to a complete admin dashboard.
+These existing features have not been independently re-certified by this increment. Signed-in carts are persisted through the API and checkout gets a server-calculated merchandise subtotal, but order placement, shipping, tax, payment, and final totals are incomplete. The admin APIs do not amount to a complete admin dashboard.
 
 ## Remaining implementation
 
-1. **Commerce foundation:** persistent server-owned cart, product variants and SKU-level inventory, stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. The merchandise-only quote endpoint is now used for checkout price display; local cart synchronization remains pending.
+1. **Commerce foundation:** apply `0008` to Preview after authorization, enter real per-size quantities for existing products, then add stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. Signed-in cart sync and the merchandise-only quote endpoint are implemented; legacy products still use aggregate stock until their size inventory is supplied.
 2. **Verified payment:** integrate a real provider in test mode, create payment intents/orders on the API, verify signatures and webhooks server-side, handle idempotency/refunds, and only mark orders paid from verified provider events. No payment provider credentials are currently configured for this app.
 3. **Customer operations:** order status, cancellation/return eligibility and requests, shipment/tracking data, transactional email, support contact flow, and account recovery/verification.
 4. **Store operations:** protected admin UI for products, inventory, orders, customers, promotions, content, and settings, backed by role-checked API operations and audit history.
-5. **Storefront completeness:** persistent consent-based newsletter and unsubscribe, product reviews, robust search/filter URL state, accurate merchandising/bestsellers, policy/trust content, and product structured data/sitemap/metadata.
+5. **Storefront completeness:** persistent consent-based newsletter and unsubscribe, product reviews, accurate merchandising/bestsellers, policy/trust content, and product structured data/sitemap/metadata. Search and filter URL state are implemented.
 6. **Launch verification:** automated API and browser tests for registration, catalogue, inventory races, checkout, provider callbacks, refunds, and admin permissions; accessibility/performance checks; staging deployment verification.
 
 ## Owner-provided launch inputs
@@ -85,4 +89,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-Resolve the Preview browser-to-API access/origin mismatch, then verify signed-in cart GET/PUT, account switching, and frontend-to-API behavior. After that, add the order/stock reservation model and verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
+After authorization, apply `0008` to Preview and verify product variant reads/writes. Then resolve the separate Preview SSO browser-to-API block and verify signed-in cart GET/PUT and account switching. Continue with order/stock reservations and a verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.

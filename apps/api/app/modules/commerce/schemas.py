@@ -5,10 +5,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+ProductSize = Literal["XS", "S", "M", "L", "XL", "XXL"]
+
 
 class CartMerchandiseQuoteLineIn(BaseModel):
     product_id: UUID
     quantity: int = Field(ge=1, le=99)
+    size: ProductSize | None = None
 
 
 class CartMerchandiseQuoteIn(BaseModel):
@@ -19,6 +22,7 @@ class CartMerchandiseQuoteLineOut(BaseModel):
     product_id: UUID
     name: str
     quantity: int
+    size: ProductSize | None
     unit_price: Decimal
     line_subtotal: Decimal
 
@@ -27,9 +31,6 @@ class CartMerchandiseQuoteOut(BaseModel):
     currency: str
     items: list[CartMerchandiseQuoteLineOut]
     merchandise_subtotal: Decimal
-
-
-ProductSize = Literal["XS", "S", "M", "L", "XL", "XXL"]
 
 
 class CustomerCartItemReplaceIn(BaseModel):

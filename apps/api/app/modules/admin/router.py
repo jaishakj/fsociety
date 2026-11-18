@@ -234,7 +234,7 @@ async def import_products_endpoint(
             file.filename,
             content,
         )
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),

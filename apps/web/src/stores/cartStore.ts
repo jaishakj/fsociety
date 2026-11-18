@@ -17,7 +17,7 @@ export interface CartItem {
   size: ProductSize | null;
 }
 
-type AddableProduct = Pick<Product, "id" | "name" | "price" | "currency" | "images"> & {
+type AddableProduct = Pick<Product, "id" | "name" | "price" | "currency" | "images" | "variants"> & {
   category: Pick<Category, "slug" | "name">;
 };
 
@@ -62,6 +62,12 @@ export const useCartStore = create<CartState>()(
 
         const productId = product.id;
         const lineId = size ? `${productId}:${size}` : productId;
+        const existingQuantity = get().items.find((item) => item.id === lineId)?.quantity ?? 0;
+        const variant = product.variants?.find((item) => item.size === size);
+        if (product.variants?.length && (!variant || existingQuantity + quantity > variant.stock)) {
+          set({ pendingSizeSelection: { kind: "add", product, quantity } });
+          return false;
+        }
 
         set((state) => {
           const existing = state.items.find((item) => item.id === lineId);
@@ -117,6 +123,9 @@ export const useCartStore = create<CartState>()(
 
         if (pending.kind === "add") {
           const product = pending.product;
+          const existingQuantity = get().items.find((item) => item.id === `${product.id}:${size}`)?.quantity ?? 0;
+          const variant = product.variants?.find((item) => item.size === size);
+          if (product.variants?.length && (!variant || existingQuantity + pending.quantity > variant.stock)) return;
           const lineId = `${product.id}:${size}`;
           set((state) => {
             const existing = state.items.find((item) => item.id === lineId);

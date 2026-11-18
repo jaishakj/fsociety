@@ -7,6 +7,7 @@ import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dial
 
 export function SizeChoiceDialog() {
   const pending = useCartStore((state) => state.pendingSizeSelection);
+  const cartItems = useCartStore((state) => state.items);
   const chooseSize = useCartStore((state) => state.choosePendingSize);
   const close = useCartStore((state) => state.closeSizePrompt);
   const reduceMotion = useReducedMotion();
@@ -16,6 +17,15 @@ export function SizeChoiceDialog() {
         pending.kind === "add" ? pending.product.category.slug : pending.categorySlug,
         pending.kind === "add" ? pending.product.category.name : pending.categoryName,
       )
+    : [];
+  const unavailableSizes = pending?.kind === "add" && pending.product.variants?.length
+    ? sizes.filter((size) => {
+        const variant = pending.product.variants?.find((item) => item.size === size);
+        const existingQuantity = cartItems.find(
+          (item) => item.productId === pending.product.id && item.size === size,
+        )?.quantity ?? 0;
+        return !variant || existingQuantity + pending.quantity > variant.stock;
+      })
     : [];
 
   return (
@@ -75,17 +85,26 @@ export function SizeChoiceDialog() {
               aria-label="Choose a clothing size"
               className={`mt-7 grid gap-2 ${sizes.length > 5 ? "grid-cols-6" : "grid-cols-5"}`}
             >
-              {sizes.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  data-cursor
-                  onClick={() => chooseSize(size)}
-                  className="flex min-h-12 items-center justify-center rounded-full border border-white/10 text-sm text-[var(--color-paper)] transition-colors hover:border-[var(--color-signal)] hover:bg-[var(--color-signal)]/10 hover:text-[var(--color-signal)]"
-                >
-                  {size}
-                </button>
-              ))}
+              {sizes.map((size) => {
+                const unavailable = unavailableSizes.includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    data-cursor
+                    disabled={unavailable}
+                    aria-label={unavailable ? `${size}, unavailable for this quantity` : size}
+                    onClick={() => chooseSize(size)}
+                    className={`flex min-h-12 items-center justify-center rounded-full border text-sm transition-colors ${
+                      unavailable
+                        ? "cursor-not-allowed border-white/5 text-[var(--color-steel)] opacity-45"
+                        : "border-white/10 text-[var(--color-paper)] hover:border-[var(--color-signal)] hover:bg-[var(--color-signal)]/10 hover:text-[var(--color-signal)]"
+                    }`}
+                  >
+                    <span className={unavailable ? "line-through" : undefined}>{size}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <p className="mt-4 text-xs text-[var(--color-steel)]">Your selection is saved with this bag item.</p>

@@ -16,7 +16,7 @@ def list_published_products_by_ids(db: Session, product_ids: set[UUID]) -> list[
     statement = select(Product).where(
         Product.id.in_(product_ids),
         Product.status == ProductStatus.PUBLISHED,
-    )
+    ).options(selectinload(Product.category), selectinload(Product.variants))
     return list(db.scalars(statement))
 
 
@@ -36,6 +36,9 @@ def get_customer_cart(db: Session, user_id: UUID) -> CustomerCart | None:
             selectinload(CustomerCart.items)
             .selectinload(CustomerCartItem.product)
             .selectinload(Product.images),
+            selectinload(CustomerCart.items)
+            .selectinload(CustomerCartItem.product)
+            .selectinload(Product.variants),
         )
         .where(CustomerCart.user_id == user_id)
     )
@@ -64,7 +67,11 @@ def list_purchasable_products_by_ids(
 
     statement = (
         select(Product)
-        .options(selectinload(Product.category), selectinload(Product.images))
+        .options(
+            selectinload(Product.category),
+            selectinload(Product.images),
+            selectinload(Product.variants),
+        )
         .where(
             Product.id.in_(product_ids),
             Product.status == ProductStatus.PUBLISHED,

@@ -11,6 +11,13 @@ export interface Category {
   slug: string;
 }
 
+export interface ProductVariant {
+  id: string;
+  size: "XS" | "S" | "M" | "L" | "XL" | "XXL";
+  sku: string;
+  stock: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +29,7 @@ export interface Product {
   status: string;
   category: Category;
   images: ProductImage[];
+  variants?: ProductVariant[];
 }
 
 export interface ProductListResponse {

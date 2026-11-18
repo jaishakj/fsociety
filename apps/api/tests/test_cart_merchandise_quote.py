@@ -30,6 +30,9 @@ def make_product(
     price: str = "1299.50",
     stock: int = 5,
     currency: str = "INR",
+    category_slug: str = "sarees",
+    category_name: str = "Sarees",
+    variants: list | None = None,
 ):
     return SimpleNamespace(
         id=product_id,
@@ -38,6 +41,8 @@ def make_product(
         stock=stock,
         currency=currency,
         status=ProductStatus.PUBLISHED,
+        category=SimpleNamespace(slug=category_slug, name=category_name),
+        variants=variants or [],
     )
 
 
@@ -50,7 +55,7 @@ def test_quote_uses_published_server_prices_and_decimal_arithmetic(client, monke
 
     response = client.post(
         "/api/v1/cart/merchandise-quote",
-        json={"items": [{"product_id": str(product_id), "quantity": 2}]},
+        json={"items": [{"product_id": str(product_id), "quantity": 2, "size": "M"}]},
     )
 
     assert response.status_code == 200
@@ -61,6 +66,7 @@ def test_quote_uses_published_server_prices_and_decimal_arithmetic(client, monke
                 "product_id": str(product_id),
                 "name": "Linen Saree",
                 "quantity": 2,
+                "size": "M",
                 "unit_price": "1299.50",
                 "line_subtotal": "2599.00",
             }
@@ -80,8 +86,8 @@ def test_quote_aggregates_duplicate_product_lines_before_stock_check(client, mon
         "/api/v1/cart/merchandise-quote",
         json={
             "items": [
-                {"product_id": str(product_id), "quantity": 2},
-                {"product_id": str(product_id), "quantity": 2},
+                {"product_id": str(product_id), "quantity": 2, "size": "M"},
+                {"product_id": str(product_id), "quantity": 2, "size": "L"},
             ]
         },
     )
@@ -120,8 +126,8 @@ def test_quote_rejects_mixed_currency_baskets(client, monkeypatch) -> None:
         "/api/v1/cart/merchandise-quote",
         json={
             "items": [
-                {"product_id": str(first_id), "quantity": 1},
-                {"product_id": str(second_id), "quantity": 1},
+                {"product_id": str(first_id), "quantity": 1, "size": "M"},
+                {"product_id": str(second_id), "quantity": 1, "size": "M"},
             ]
         },
     )
@@ -170,3 +176,82 @@ def test_product_lookup_scopes_quote_to_published_catalog_items() -> None:
     assert "products.id IN" in sql
     assert "products.status =" in sql
     assert ProductStatus.PUBLISHED in compiled.params.values()
+
+
+@pytest.mark.parametrize(
+    ("category_slug", "category_name", "size", "expected_status"),
+    [
+        ("dresses", "Dresses", "XS", 200),
+        ("tops", "Tops", "XS", 422),
+        ("footwear", "Footwear", None, 200),
+        ("sarees", "Sarees", None, 422),
+    ],
+)
+def test_quote_validates_selected_size_for_product_category(
+    client,
+    monkeypatch,
+    category_slug,
+    category_name,
+    size,
+    expected_status,
+) -> None:
+    product_id = uuid4()
+    monkeypatch.setattr(
+        "app.modules.commerce.router.repository.list_published_products_by_ids",
+        lambda _db, _ids: [
+            make_product(
+                product_id,
+                category_slug=category_slug,
+                category_name=category_name,
+            )
+        ],
+    )
+
+    response = client.post(
+        "/api/v1/cart/merchandise-quote",
+        json={"items": [{"product_id": str(product_id), "quantity": 1, "size": size}]},
+    )
+
+    assert response.status_code == expected_status
+    if expected_status == 200:
+        assert response.json()["items"][0]["size"] == size
+
+
+def test_quote_requires_size_for_clothing_products(client, monkeypatch) -> None:
+    product_id = uuid4()
+    monkeypatch.setattr(
+        "app.modules.commerce.router.repository.list_published_products_by_ids",
+        lambda _db, _ids: [make_product(product_id)],
+    )
+
+    response = client.post(
+        "/api/v1/cart/merchandise-quote",
+        json={"items": [{"product_id": str(product_id), "quantity": 1}]},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Select a valid size for each product"
+
+
+def test_quote_checks_stock_for_the_selected_size(client, monkeypatch) -> None:
+    product_id = uuid4()
+    product = make_product(
+        product_id,
+        stock=5,
+        variants=[
+            SimpleNamespace(size="M", stock=1),
+            SimpleNamespace(size="L", stock=4),
+        ],
+    )
+    monkeypatch.setattr(
+        "app.modules.commerce.router.repository.list_published_products_by_ids",
+        lambda _db, _ids: [product],
+    )
+
+    response = client.post(
+        "/api/v1/cart/merchandise-quote",
+        json={"items": [{"product_id": str(product_id), "quantity": 2, "size": "M"}]},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Requested size is unavailable"

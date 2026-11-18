@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.modules.products.models import Category, Product, ProductStatus
+from app.modules.products.models import Category, Product, ProductStatus, ProductVariant
 
 
 def escape_like_query(search: str) -> str:
@@ -31,7 +31,11 @@ def list_categories(db: Session) -> list[Category]:
 def get_product_by_slug(db: Session, slug: str) -> Product | None:
     stmt = (
         select(Product)
-        .options(selectinload(Product.images), selectinload(Product.category))
+        .options(
+            selectinload(Product.images),
+            selectinload(Product.category),
+            selectinload(Product.variants),
+        )
         .where(Product.slug == slug)
     )
     return db.scalar(stmt)
@@ -40,7 +44,11 @@ def get_product_by_slug(db: Session, slug: str) -> Product | None:
 def get_product_by_id(db: Session, product_id: UUID) -> Product | None:
     stmt = (
         select(Product)
-        .options(selectinload(Product.images), selectinload(Product.category))
+        .options(
+            selectinload(Product.images),
+            selectinload(Product.category),
+            selectinload(Product.variants),
+        )
         .where(Product.id == product_id)
     )
     return db.scalar(stmt)
@@ -59,7 +67,9 @@ def list_products(
     sort: str = "newest",
 ) -> tuple[list[Product], int]:
     stmt = select(Product).options(
-        selectinload(Product.images), selectinload(Product.category)
+        selectinload(Product.images),
+        selectinload(Product.category),
+        selectinload(Product.variants),
     )
 
     if status is not None:
@@ -93,3 +103,15 @@ def list_products(
 
     items = list(db.scalars(stmt))
     return items, total
+
+
+def product_variant_sku_exists(
+    db: Session,
+    sku: str,
+    *,
+    exclude_product_id: UUID | None = None,
+) -> bool:
+    statement = select(ProductVariant.id).where(ProductVariant.sku == sku)
+    if exclude_product_id is not None:
+        statement = statement.where(ProductVariant.product_id != exclude_product_id)
+    return db.scalar(statement.limit(1)) is not None

@@ -2,7 +2,17 @@ import enum
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import Enum, ForeignKey, Integer, Numeric, String, Text, Uuid
+from sqlalchemy import (
+    CheckConstraint,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDMixin
@@ -37,7 +47,7 @@ class Product(UUIDMixin, TimestampMixin, Base):
         Uuid, ForeignKey("categories.id"), index=True
     )
 
-    stock: Mapped[int] = mapped_column(Integer, default=0)
+    stock: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     status: Mapped[ProductStatus] = mapped_column(
         Enum(
@@ -50,11 +60,41 @@ class Product(UUIDMixin, TimestampMixin, Base):
 
     category: Mapped["Category"] = relationship(back_populates="products")
 
+    variants: Mapped[list["ProductVariant"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="ProductVariant.size",
+    )
+
     images: Mapped[list["ProductImage"]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan",
         order_by="ProductImage.position",
     )
+
+
+class ProductVariant(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "product_variants"
+    __table_args__ = (
+        UniqueConstraint("product_id", "size", name="uq_product_variants_product_size"),
+        UniqueConstraint("sku", name="uq_product_variants_sku"),
+        CheckConstraint(
+            "size IN ('XS', 'S', 'M', 'L', 'XL', 'XXL')",
+            name="ck_product_variants_size",
+        ),
+        CheckConstraint("stock >= 0", name="ck_product_variants_stock"),
+    )
+
+    product_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey("products.id", ondelete="CASCADE"),
+        index=True,
+    )
+    size: Mapped[str] = mapped_column(String(3))
+    sku: Mapped[str] = mapped_column(String(100))
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+
+    product: Mapped[Product] = relationship(back_populates="variants")
 
 
 class ProductImage(UUIDMixin, Base):
