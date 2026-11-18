@@ -27,6 +27,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 - The shop page now reads category, search query, minimum and maximum price, sort order, and page number from the URL. Filter changes update the URL, so shared links, refreshes, and browser Back/Forward restore the selected state.
 - Invalid query values fall back to safe defaults, unrelated query parameters are preserved, and default values are omitted when serializing. Price input edits replace the current history entry; category, sort, and pagination changes create navigable entries. Sorting resets pagination, and a minimum price of zero can be cleared.
+- The search modal now has a “View all” link after its eight suggestions. It opens the shop with the current query using the existing filter serializer, so shoppers can continue through the full result set.
 - Verification on 2026-11-18: web tests `11 passed`; TypeScript build passed; Vite production build passed. The existing large-chunk warning remains. Web lint is unavailable because ESLint is not installed in the web package.
 
 ## Commerce foundation stage 1
@@ -59,6 +60,7 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Preview deployment verification on 2026-11-18: API and web deployments for commit `c22f1ec` are `READY`; API `/health` and `/openapi.json` returned `200`, the OpenAPI document lists the cart and auth routes, and public category data returned seven entries. The web homepage returned `200`, and its deployed JavaScript contains the branch-specific Preview API URL rather than the Production API URL.
 - Browser verification is incomplete: the storefront displayed “Categories are temporarily unavailable” and “Couldn't load new arrivals.” The API data call succeeded through Vercel's authenticated fetch, but cross-origin browser requests are intercepted by Preview SSO. The authenticated cart GET/PUT flow has not been exercised.
 - Follow-up on 2026-11-18: the owner approved a Preview-only `FRONTEND_URL` check/fix. It was set to the active Preview web origin and the API was redeployed from `be2813e` as `api-mhq6pgcrq-jaishak2003-gmailcoms-projects.vercel.app` (`READY`). Direct unauthenticated browser-origin requests to the API branch alias receive Vercel's HTML access page rather than catalogue JSON, while Vercel's authenticated fetch and the signed-in browser can read the JSON. This indicates Preview SSO is intercepting the cross-origin browser request. The storefront still cannot load its catalogue; no SSO setting was changed.
+- Later read-only recheck: the API still has a `FRONTEND_URL` entry scoped to Preview branch `codex/publish-sizes-to-main`. Vercel redacts the sensitive value from reads, so I could not independently compare its exact origin with the active web deployment; I did not replace it blindly. Latest web and API Preview deployments for `5c57d9f` are `READY`; the cross-origin SSO/preflight issue remains unresolved.
 
 ## Existing foundation observed during audit
 

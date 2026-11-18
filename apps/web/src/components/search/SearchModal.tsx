@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProducts } from "@/hooks/useProducts";
+import { serializeShopFilters } from "@/lib/shopFilters";
 import { useSearchStore } from "@/stores/searchStore";
 import { handleDialogKeyDown, useDialogFocusRestore } from "@/components/ui/dialogKeyboard";
 
@@ -29,6 +30,7 @@ export function SearchModal() {
     debouncedQuery.length > 1 ? { q: debouncedQuery, page_size: 8 } : {},
   );
   const results = debouncedQuery.length > 1 ? (data?.items ?? []) : [];
+  const allResultsSearch = serializeShopFilters({ q: debouncedQuery }).toString();
 
   return (
     <AnimatePresence>
@@ -81,32 +83,42 @@ export function SearchModal() {
                   No products match &ldquo;{debouncedQuery}&rdquo;.
                 </p>
               ) : (
-                <ul aria-label="Search results" className="space-y-1">
-                  {results.map((product) => (
-                    <li key={product.id}>
-                      <Link
-                        to={`/product/${product.slug}`}
-                        data-cursor
-                        onClick={close}
-                        className="flex min-h-16 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-white/5"
-                      >
-                        {product.images[0]?.url ? (
-                          <img
-                            src={product.images[0].url}
-                            alt={product.name}
-                            className="h-12 w-10 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="h-12 w-10 rounded-lg bg-black/40" />
-                        )}
-                        <span className="flex-1 text-sm text-[var(--color-paper)]">{product.name}</span>
-                        <span className="font-mono text-xs text-[var(--color-signal)]">
-                          {product.currency} {product.price}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul aria-label="Search results" className="space-y-1">
+                    {results.map((product) => (
+                      <li key={product.id}>
+                        <Link
+                          to={`/product/${product.slug}`}
+                          data-cursor
+                          onClick={close}
+                          className="flex min-h-16 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-white/5"
+                        >
+                          {product.images[0]?.url ? (
+                            <img
+                              src={product.images[0].url}
+                              alt={product.name}
+                              className="h-12 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="h-12 w-10 rounded-lg bg-black/40" />
+                          )}
+                          <span className="flex-1 text-sm text-[var(--color-paper)]">{product.name}</span>
+                          <span className="font-mono text-xs text-[var(--color-signal)]">
+                            {product.currency} {product.price}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to={{ pathname: "/shop", search: allResultsSearch ? `?${allResultsSearch}` : "" }}
+                    data-cursor
+                    onClick={close}
+                    className="mt-3 flex min-h-12 items-center justify-center rounded-full border border-[var(--color-signal)]/40 px-4 text-sm text-[var(--color-signal)] transition-colors hover:bg-[var(--color-signal)]/10"
+                  >
+                    View all {data?.total ?? results.length} results
+                  </Link>
+                </>
               )}
             </div>
           </motion.div>
