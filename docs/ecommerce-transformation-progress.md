@@ -4,10 +4,9 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 
 ## Waiting for owner input
 
-- **May I apply migration `0008_product_variants` to the isolated Neon Preview branch only?** It adds per-size SKU and stock records and advances Preview from `0007` to `0008`; Production is not involved. I verified the Preview branch is at `0007` and the new table is absent. The downgrade refuses to remove the table once variant rows exist. Automatic approval review rejected the exact Preview transaction because the earlier approval covered migration `0007` only; no database changes were applied. The local code is not pushed while Preview is missing this schema.
 - **May I make the isolated Preview API publicly reachable by changing only its Preview deployment protection, so the storefront can call it without a Vercel SSO session?** This would expose the Preview API URL and public catalogue/auth endpoints; account and cart routes still require app authentication, and they use the isolated Preview database. Production protection and data would remain untouched. I have not changed this access setting.
-- The API Preview build is `READY`, and the public categories endpoint returns data through Vercel's authenticated fetch. The browser storefront still shows catalogue loading. A direct unauthenticated request to the API branch alias receives Vercel's HTML access page instead of JSON; an `OPTIONS` preflight also returns without CORS headers. Opening the API URL directly in the signed-in browser returns JSON. This points to Vercel Preview SSO intercepting cross-origin requests; changing CORS alone cannot bypass that gate.
-- The authenticated cart round trip remains unverified. No test account was created and no cart data was written.
+- The latest API and web Preview deployments from `1bea34b` are `READY`. Through Vercel's protected-deployment fetch, API `/health`, categories, and product-list routes returned `200`; the product list reports 45 products and includes the `variants` field. The web root returned `200`, and its bundle points to the Preview API branch alias, not Production.
+- Browser cross-origin requests and authenticated cart round trips remain unverified because Preview SSO is enabled. No customer account or cart data was created or written.
 
 ## Running notes
 
@@ -20,7 +19,8 @@ This document tracks implementation against `writing-block (4).md`. That specifi
 - Checkout quote lines now carry each chosen size to the API; the API validates category/size combinations and returns the size so the client can verify the quote belongs to the current bag.
 - Added size-level variant inventory with a unique SKU per product size. Admin product create/update and CSV/JSON import accept variant stock; omitted SKUs are generated. Product-level stock remains the aggregate for compatibility. Existing products remain on legacy aggregate stock until real per-size quantities are entered; no distribution was invented.
 - Cart replacement, saved-cart availability, and checkout quotes enforce each configured size's stock. The product page and size prompt disable sizes that cannot satisfy the requested quantity.
-- The additive migration is checked in locally as `0008_product_variants`, but it is not applied to Neon Preview because automatic approval review rejected that specific database write. These changes have not been pushed, so the currently deployed Preview remains on the prior working commit.
+- With owner approval on 2026-11-18, migration `0008_product_variants` was applied to the isolated Neon Preview branch only. Alembic is at `0008`; the table, index, and six expected constraints are present, and the table has zero variant rows. Production remains at `0006` and was not changed.
+- Commit `1bea34b` was pushed to `codex/publish-sizes-to-main`. API and web Preview deployments from that commit are `READY`; the API health, categories, and product-list routes returned `200`. The web bundle uses the Preview API alias. Browser CORS/cart verification remains blocked by Vercel Preview SSO; no SSO setting was changed.
 - Verification on 2026-11-18: API tests `44 passed`; Ruff passed for changed API files; web tests `11 passed`; TypeScript build passed; Vite production build passed with the existing large-chunk warning. One existing Pydantic deprecation warning remains.
 - Removed the client-generated UPI payment link and QR code. A configured VPA alone cannot prove that a payment was received, and this app currently has no order creation or payment verification endpoint.
 - Checkout now explains that secure payment is unavailable, no order has been placed, and no payment has been taken. The customer's bag remains available for later.
@@ -76,7 +76,7 @@ These existing features have not been independently re-certified by this increme
 
 ## Remaining implementation
 
-1. **Commerce foundation:** apply `0008` to Preview after authorization, enter real per-size quantities for existing products, then add stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. Signed-in cart sync and the merchandise-only quote endpoint are implemented; legacy products still use aggregate stock until their size inventory is supplied.
+1. **Commerce foundation:** enter real per-size quantities for existing products, then add stock reservations, shipping/tax calculation, coupon rules, order and line-item snapshots, idempotent order placement, and customer order history. Migration `0008` is applied to Preview; the variants table is empty, so existing products continue to use aggregate stock until genuine size quantities are supplied. Signed-in cart sync and the merchandise-only quote endpoint are implemented.
 2. **Verified payment:** integrate a real provider in test mode, create payment intents/orders on the API, verify signatures and webhooks server-side, handle idempotency/refunds, and only mark orders paid from verified provider events. No payment provider credentials are currently configured for this app.
 3. **Customer operations:** order status, cancellation/return eligibility and requests, shipment/tracking data, transactional email, support contact flow, and account recovery/verification.
 4. **Store operations:** protected admin UI for products, inventory, orders, customers, promotions, content, and settings, backed by role-checked API operations and audit history.
@@ -89,4 +89,4 @@ Before enabling payments or promising delivery, the store owner must choose a su
 
 ## Next safe stage
 
-After authorization, apply `0008` to Preview and verify product variant reads/writes. Then resolve the separate Preview SSO browser-to-API block and verify signed-in cart GET/PUT and account switching. Continue with order/stock reservations and a verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
+Next, enter genuine per-size stock through the product administration/import path and verify variant writes. Resolve the separate Preview SSO browser-to-API block before browser-testing signed-in cart GET/PUT and account switching. Continue with order/stock reservations and a verified payment-provider flow; keep purchase disabled until those steps and provider verification are complete.
